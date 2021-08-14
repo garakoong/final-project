@@ -13,7 +13,7 @@
 #endif
 
 /* Keeps stats per (enum) xdp_action */
-struct bpf_map_def SEC("maps") xdp_stats_map = {
+struct bpf_map_def SEC("maps") module_stats_map = {
 	.type        = BPF_MAP_TYPE_PERCPU_ARRAY,
 	.key_size    = sizeof(__u32),
 	.value_size  = sizeof(struct datarec),
@@ -27,7 +27,7 @@ __u32 xdp_stats_record_action(struct xdp_md *ctx, __u32 action)
 		return XDP_ABORTED;
 
 	/* Lookup in kernel BPF-side return pointer to actual data record */
-	struct datarec *rec = bpf_map_lookup_elem(&xdp_stats_map, &action);
+	struct datarec *rec = bpf_map_lookup_elem(&module_stats_map, &action);
 	if (!rec)
 		return XDP_ABORTED;
 
