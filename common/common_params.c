@@ -9,8 +9,11 @@
 #include <net/if.h>
 #include <linux/if_link.h> /* XDP_FLAGS_* depend on kernel-headers installed */
 #include <linux/if_xdp.h>
+#include <arpa/inet.h>
+#include <linux/in6.h>
 
 #include "common_params.h"
+#include "firewall_common.h"
 
 int verbose = 1;
 
@@ -39,7 +42,7 @@ void _print_options(const struct option_wrapper *long_options, bool required)
 }
 
 void usage(const char *prog_name, const char *doc,
-           const struct option_wrapper *long_options, bool full)
+		   const struct option_wrapper *long_options, bool full)
 {
 	printf("Usage: %s [options]\n", prog_name);
 
@@ -78,13 +81,17 @@ int option_wrappers_to_options(const struct option_wrapper *wrapper,
 
 void parse_cmdline_args(int argc, char **argv,
 			const struct option_wrapper *options_wrapper,
-                        struct config *cfg, const char *doc)
+						struct config *cfg, const char *doc)
 {
 	struct option *long_options;
 	bool full_help = false;
 	int longindex = 0;
 	char *dest;
+	char* buf;
+	__u32 prefixlen;
+	int isLPM;
 	int opt;
+	char ipa[INET6_ADDRSTRLEN];
 
 	if (option_wrappers_to_options(options_wrapper, &long_options)) {
 		fprintf(stderr, "Unable to malloc()\n");
@@ -92,12 +99,141 @@ void parse_cmdline_args(int argc, char **argv,
 	}
 
 	/* Parse commands line args */
-	while ((opt = getopt_long(argc, argv, "hd:r:L:R:ASNFUMQ:czpq",
+	while ((opt = getopt_long(argc, argv, "hLA:a:D:d:I:i:E:e:M:m:S:F:C:O:o:n:Uqf:t:p:j:N:",
 				  long_options, &longindex)) != -1) {
 		switch (opt) {
+		case 'L':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = LOAD_FW;
+			break;
+		case 'A':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = ADD_MODULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_new_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
+			break;
+		case 'a':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = ADD_RULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
+			break;
+		case 'D':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = DELETE_MODULE;
+			break;
 		case 'd':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = DELETE_RULE;
+			break;
+		case 'I':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = INSERT_MODULE;
+			break;
+		case 'i':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = INSERT_RULE;
+			break;
+		case 'E':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = EDIT_MODULE;
+			break;
+		case 'e':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = EDIT_RULE;
+			break;
+		case 'M':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = MOVE_MODULE;
+			break;
+		case 'm':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = DELETE_RULE;
+			break;
+		case 'S':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = SHOW_FW_STATS;
+			/* check module name, if not '-' cfg->cmd = SHOW_MODULE_STATS */
+			break;
+		case 'F':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = FLUSH_FW;
+			/* check module name, if not '-' cfg->cmd = FLUSH_MODULE */
+			break;
+		case 'C':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = FLUSH_FW_STATS;
+			/* check module name, if not '-' cfg->cmd = FLUSH_MODULE_STATS */
+			break;
+		case 'O':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = ACTIVATE_MODULE;
+			break;
+		case 'o':
+			if (cfg->cmd != PRESERVED) {
+				fprintf(stderr, "ERR: Too many command flags.");
+				goto error;
+			}
+			cfg->cmd = DEACTIVATE_MODULE;
+			break;
+		case 'N':
+			break;
+		case 'n':
 			if (strlen(optarg) >= IF_NAMESIZE) {
-				fprintf(stderr, "ERR: --dev name too long\n");
+				fprintf(stderr, "ERR: --networkif name too long\n");
 				goto error;
 			}
 			cfg->ifname = (char *)&cfg->ifname_buf;
@@ -105,84 +241,185 @@ void parse_cmdline_args(int argc, char **argv,
 			cfg->ifindex = if_nametoindex(cfg->ifname);
 			if (cfg->ifindex == 0) {
 				fprintf(stderr,
-					"ERR: --dev name unknown err(%d):%s\n",
+					"ERR: --networkif name unknown err(%d):%s\n",
 					errno, strerror(errno));
 				goto error;
 			}
+			cfg->rule_key.ifindex = cfg->ifindex;
 			break;
-		case 'r':
-			if (strlen(optarg) >= IF_NAMESIZE) {
-				fprintf(stderr, "ERR: --redirect-dev name too long\n");
+		case 'j':
+			if (strcmp(optarg, "ACCEPT") == 0)
+				cfg->rule_action = XDP_PASS;
+			else if (strcmp(optarg, "REJECT") == 0)
+				cfg->rule_action = XDP_DROP;
+			else {
+				fprintf(stderr, "ERR: Action not supported. (Only 'ACCEPT' and 'REJECT' is available.\n");
 				goto error;
 			}
-			cfg->redirect_ifname = (char *)&cfg->redirect_ifname_buf;
-			strncpy(cfg->redirect_ifname, optarg, IF_NAMESIZE);
-			cfg->redirect_ifindex = if_nametoindex(cfg->redirect_ifname);
-			if (cfg->redirect_ifindex == 0) {
-				fprintf(stderr,
-						"ERR: --redirect-dev name unknown err(%d):%s\n",
-						errno, strerror(errno));
-				goto error;
-			}
-			break;
-		case 'A':
-			cfg->xdp_flags &= ~XDP_FLAGS_MODES;    /* Clear flags */
-			break;
-		case 'S':
-			cfg->xdp_flags &= ~XDP_FLAGS_MODES;    /* Clear flags */
-			cfg->xdp_flags |= XDP_FLAGS_SKB_MODE;  /* Set   flag */
-			cfg->xsk_bind_flags &= XDP_ZEROCOPY;
-			cfg->xsk_bind_flags |= XDP_COPY;
-			break;
-		case 'N':
-			cfg->xdp_flags &= ~XDP_FLAGS_MODES;    /* Clear flags */
-			cfg->xdp_flags |= XDP_FLAGS_DRV_MODE;  /* Set   flag */
-			break;
-		case 3: /* --offload-mode */
-			cfg->xdp_flags &= ~XDP_FLAGS_MODES;    /* Clear flags */
-			cfg->xdp_flags |= XDP_FLAGS_HW_MODE;   /* Set   flag */
-			break;
-		case 'F':
-			cfg->xdp_flags &= ~XDP_FLAGS_UPDATE_IF_NOEXIST;
-			break;
-		case 'M':
-			cfg->reuse_maps = true;
 			break;
 		case 'U':
-			cfg->do_unload = true;
-			break;
-		case 'p':
-			cfg->xsk_poll_mode = true;
+			cfg->cmd = UNLOAD_FW;
 			break;
 		case 'q':
 			verbose = false;
 			break;
-		case 'Q':
-			cfg->xsk_if_queue = atoi(optarg);
+		case 'p':
+			if (strcmp(optarg, "tcp") == 0 || strcmp(optarg, "TCP") == 0 || atoi(optarg) == IPPROTO_TCP) {
+				cfg->rule_key.proto = IPPROTO_TCP;
+			} else if (strcmp(optarg, "udp") == 0 || strcmp(optarg, "UDP") == 0 || atoi(optarg) == IPPROTO_UDP) {
+				cfg->rule_key.proto = IPPROTO_UDP;
+			} else {
+				fprintf(stderr, "ERR: Protocol not supported.\n");
+				goto error;
+			}
 			break;
-		case 1: /* --filename */
-			dest  = (char *)&cfg->filename;
-			strncpy(dest, optarg, sizeof(cfg->filename));
+		case 1: /* --sport */
+			cfg->rule_key.sport = atoi(optarg);
+			if (cfg->rule_key.sport <= 0 || cfg->rule_key.sport > 65535) {
+				fprintf(stderr, "ERR: Invalid source port number (%d).\n", cfg->rule_key.sport);
+				goto error;
+			}
 			break;
-		case 2: /* --progsec */
-			dest  = (char *)&cfg->progsec;
-			strncpy(dest, optarg, sizeof(cfg->progsec));
+		case 2: /* --dport */
+			cfg->rule_key.dport = atoi(optarg);
+			if (cfg->rule_key.dport <= 0 || cfg->rule_key.dport > 65535) {
+				fprintf(stderr, "ERR: Invalid dest port number (%d).\n", cfg->rule_key.dport);
+				goto error;
+			}
 			break;
-		case 'L': /* --src-mac */
-			dest  = (char *)&cfg->src_mac;
-			strncpy(dest, optarg, sizeof(cfg->src_mac));
+		case 'f':
+			prefixlen = -1;
+			isLPM = 0;
+
+			buf = strtok(optarg, "/");			// get ip address part
+			strncpy(ipa, buf, INET6_ADDRSTRLEN);
+
+			buf = strtok(NULL, "/");			// get prefix part
+			if (buf != NULL) {
+				prefixlen = atoi(buf);
+				isLPM = 1;
+			}
+				
+			if (strchr(ipa, ':')) {
+				if (cfg->rule_key.AF != 0 && cfg->rule_key.AF != AF_INET6) {
+					fprintf(stderr, "ERR: IP address family mismatch.\n");
+					goto error;
+				}
+
+				if (isLPM) {
+					if (prefixlen < 0 || prefixlen > 128) {
+						fprintf(stderr, "ERR: Invalid prefix len (%d).\n", prefixlen);
+						goto error;
+					} else if (prefixlen == 128) isLPM = 0;
+				}
+
+				if (isLPM) {
+					cfg->rule_key.src_ipv6_lpm.word[0] = prefixlen;
+					if (inet_pton(AF_INET6, ipa, &cfg->rule_key.src_ipv6_lpm.word[1]) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				} else {
+					if (inet_pton(AF_INET6, ipa, &cfg->rule_key.src_ipv6) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				}
+				cfg->rule_key.AF = AF_INET6;
+			} else {
+				if (cfg->rule_key.AF != 0 && cfg->rule_key.AF != AF_INET) {
+					fprintf(stderr, "ERR: IP address family mismatch.\n");
+					goto error;
+				}
+
+				if (isLPM) {
+					if (prefixlen < 0 || prefixlen > 32) {
+						fprintf(stderr, "ERR: Invalid prefix len (%d).\n", prefixlen);
+						goto error;
+					} else if (prefixlen == 32) isLPM = 0;
+				}
+
+				if (isLPM) {
+					cfg->rule_key.src_ipv4_lpm.word[0] = prefixlen;
+					if (inet_pton(AF_INET, ipa, &cfg->rule_key.src_ipv4_lpm.word[1]) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				} else {
+					if (inet_pton(AF_INET, ipa, &cfg->rule_key.src_ipv4) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				}
+				cfg->rule_key.AF = AF_INET;
+			}
 			break;
-		case 'R': /* --dest-mac */
-			dest  = (char *)&cfg->dest_mac;
-			strncpy(dest, optarg, sizeof(cfg->dest_mac));
-			break;
-		case 'c':
-			cfg->xsk_bind_flags &= XDP_ZEROCOPY;
-			cfg->xsk_bind_flags |= XDP_COPY;
-			break;
-		case 'z':
-			cfg->xsk_bind_flags &= XDP_COPY;
-			cfg->xsk_bind_flags |= XDP_ZEROCOPY;
+		case 't':
+			prefixlen = -1;
+			isLPM = 0;
+
+			buf = strtok(optarg, "/");			// get ip address part
+			strncpy(ipa, buf, INET6_ADDRSTRLEN);
+
+			buf = strtok(NULL, "/");			// get prefix part
+			if (buf != NULL) {
+				prefixlen = atoi(buf);
+				isLPM = 1;
+			}
+				
+			if (strchr(ipa, ':')) {
+				if (cfg->rule_key.AF != 0 && cfg->rule_key.AF != AF_INET6) {
+					fprintf(stderr, "ERR: IP address family mismatch.\n");
+					goto error;
+				}
+
+				if (isLPM) {
+					if (prefixlen < 0 || prefixlen > 128) {
+						fprintf(stderr, "ERR: Invalid prefix len (%d).\n", prefixlen);
+						goto error;
+					} else if (prefixlen == 128) isLPM = 0;
+				}
+
+				if (isLPM) {
+					cfg->rule_key.dst_ipv6_lpm.word[0] = prefixlen;
+					if (inet_pton(AF_INET6, ipa, &cfg->rule_key.dst_ipv6_lpm.word[1]) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				} else {
+					if (inet_pton(AF_INET6, ipa, &cfg->rule_key.dst_ipv6) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				}
+				cfg->rule_key.AF = AF_INET6;
+			} else {
+				if (cfg->rule_key.AF != 0 && cfg->rule_key.AF != AF_INET) {
+					fprintf(stderr, "ERR: IP address family mismatch.\n");
+					goto error;
+				}
+
+				if (isLPM) {
+					if (prefixlen < 0 || prefixlen > 32) {
+						fprintf(stderr, "ERR: Invalid prefix len (%d).\n", prefixlen);
+						goto error;
+					} else if (prefixlen == 32) isLPM = 0;
+				}
+
+				if (isLPM) {
+					cfg->rule_key.dst_ipv4_lpm.word[0] = prefixlen;
+					if (inet_pton(AF_INET, ipa, &cfg->rule_key.src_ipv6_lpm.word[1]) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				} else {
+					if (inet_pton(AF_INET, ipa, &cfg->rule_key.dst_ipv4) != 1) {
+						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
+						goto error;
+					}
+				}
+				cfg->rule_key.AF = AF_INET;
+			}
 			break;
 		case 'h':
 			full_help = true;
