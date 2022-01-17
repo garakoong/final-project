@@ -19,6 +19,7 @@
 #include <linux/if_link.h> /* depend on kernel-headers installed */
 
 #include "../common/common_user_bpf_xdp.h"
+#include "../common/common_helpers.h"
 #include "../common/common_libbpf.h"
 #include "../common/classifier_structs.h"
 #include "loader_helpers.h"
@@ -28,9 +29,7 @@
 #define PATH_MAX	4096
 #endif
 
-
-
-int add_classifier_src_ip_vector(struct config *cfg, int value) {
+int set_classifier_src_ip_vector(struct config *cfg, int value) {
 	
 	int len;
 	int map_fd;
@@ -218,7 +217,7 @@ int add_classifier_src_ip_vector(struct config *cfg, int value) {
 	return EXIT_OK;
 }
 
-int add_classifier_dst_ip_vector(struct config *cfg, int value) {
+int set_classifier_dst_ip_vector(struct config *cfg, int value) {
 
 	int len;
 	int map_fd;
@@ -403,7 +402,7 @@ int add_classifier_dst_ip_vector(struct config *cfg, int value) {
 	return EXIT_OK;
 }
 
-int add_classifier_sport_vector(struct config *cfg, int value) {
+int set_classifier_sport_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
@@ -477,7 +476,7 @@ int add_classifier_sport_vector(struct config *cfg, int value) {
 	return EXIT_OK;
 }
 
-int add_classifier_dport_vector(struct config *cfg, int value) {
+int set_classifier_dport_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
@@ -552,7 +551,7 @@ int add_classifier_dport_vector(struct config *cfg, int value) {
 	return EXIT_OK;
 }
 
-int add_classifier_dev_vector(struct config *cfg, int value) {
+int set_classifier_dev_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
@@ -584,33 +583,33 @@ int add_classifier_dev_vector(struct config *cfg, int value) {
 	return EXIT_OK;
 }
 
-int add_classifier_vectors(struct config *cfg, int value) {
+int set_classifier_vectors(struct config *cfg, int value) {
 	int err;
-	err = add_classifier_src_ip_vector(cfg, value);
+	err = set_classifier_src_ip_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier src ip vector.\n");
 		return err;
 	}
 
-	err = add_classifier_dst_ip_vector(cfg, value);
+	err = set_classifier_dst_ip_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier dst ip vector.\n");
 		return err;
 	}
 
-	err = add_classifier_sport_vector(cfg, value);
+	err = set_classifier_sport_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier source port vector.\n");
 		return err;
 	}
 
-	err = add_classifier_dport_vector(cfg, value);
+	err = set_classifier_dport_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier dest port vector.\n");
 		return err;
 	}
 
-	err = add_classifier_dev_vector(cfg, value);
+	err = set_classifier_dev_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier device vector.\n");
 		return err;
@@ -707,7 +706,7 @@ int add_module(struct config *cfg, int isMain)
 		return EXIT_FAIL_BPF;
 	}
 
-	err = add_classifier_vectors(cfg, 1);
+	err = set_classifier_vectors(cfg, 1);
 	if (err)
 		return err;
 

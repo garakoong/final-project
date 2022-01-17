@@ -76,6 +76,9 @@ static const struct option_wrapper long_options[] = {
 	{{"index",    required_argument,	NULL,  3  },
 	 "Rule / Module index", "<index>"},
 
+	{{"new-index",    required_argument,	NULL,  4  },
+	 "Rule / Module new index", "<new-index>"},
+
 	{{0, 0, NULL,  0 }, NULL, false}
 };
 
@@ -184,6 +187,17 @@ int main(int argc, char **argv)
 			err = delete_rule(&cfg);
 			if (err) {
 				fprintf(stderr, "ERR: deleting rule from module %s.\n", cfg.module_name);
+				return err;
+			}
+			break;
+		case INSERT_RULE:
+			if (cfg.new_index == -1) {
+				fprintf(stderr, "ERR: Rule index is not set. (--new-index option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			err = insert_rule(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: inserting rule to module %s at index %d.\n", cfg.module_name, cfg.new_index);
 				return err;
 			}
 			break;
