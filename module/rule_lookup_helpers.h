@@ -42,7 +42,7 @@ void src_ip_lookup(struct iphdr *iph, struct ipv6hdr *ip6h, struct rule_vector *
 
         lookup_res = bpf_map_lookup_elem(&src_ipv6_vector, &ip6h->saddr);
 
-        lpm_val = bpf_map_lookup_elem(&src_ipv4_lpm_vector, &lpm_key);
+        lpm_val = bpf_map_lookup_elem(&src_ipv6_lpm_vector, &lpm_key);
         if (lpm_val) {
             #pragma clang loop unroll(full)
             for (w=0; w<MAX_RULE_WORD; w++) {
@@ -104,7 +104,7 @@ void dst_ip_lookup(struct iphdr *iph, struct ipv6hdr *ip6h, struct rule_vector *
 
         lookup_res = bpf_map_lookup_elem(&dst_ipv6_vector, &ip6h->daddr);
 
-        lpm_val = bpf_map_lookup_elem(&dst_ipv4_lpm_vector, &lpm_key);
+        lpm_val = bpf_map_lookup_elem(&dst_ipv6_lpm_vector, &lpm_key);
         if (lpm_val) {
             #pragma clang loop unroll(full)
             for (w=0; w<MAX_RULE_WORD; w++) {
@@ -172,9 +172,9 @@ void dst_port_lookup(struct tcphdr *tcph, struct udphdr *udph, struct rule_vecto
     int w;
 
     if (tcph != NULL) {
-        wildcard_res = bpf_map_lookup_elem(&tcp_sport_vector, &key);
+        wildcard_res = bpf_map_lookup_elem(&tcp_dport_vector, &key);
 
-        lookup_res = bpf_map_lookup_elem(&tcp_sport_vector, &tcph->dest);
+        lookup_res = bpf_map_lookup_elem(&tcp_dport_vector, &tcph->dest);
 
         if (wildcard_res) {
             #pragma clang loop unroll(full)
@@ -187,9 +187,9 @@ void dst_port_lookup(struct tcphdr *tcph, struct udphdr *udph, struct rule_vecto
             }
         }
     } else if (udph != NULL) {
-        wildcard_res = bpf_map_lookup_elem(&udp_sport_vector, &key);
+        wildcard_res = bpf_map_lookup_elem(&udp_dport_vector, &key);
 
-        lookup_res = bpf_map_lookup_elem(&udp_sport_vector, &udph->dest);
+        lookup_res = bpf_map_lookup_elem(&udp_dport_vector, &udph->dest);
 
         if (wildcard_res) {
             #pragma clang loop unroll(full)

@@ -41,19 +41,19 @@ static const struct option_wrapper long_options[] = {
 	 "Delete module <module name> from firewall.", "<module name>"},
 
 	{{"delete-rule",	required_argument,	NULL, 'd' },
-	 "Delete rule number <rule num> from module <module name>.", "<module name> <rule num>"},
+	 "Delete rule number <rule num> from module <module name>. (use --index to define <rule num>)", "<module name>"},
 
 	{{"insert-module",	required_argument,	NULL, 'I' },
-	 "Insert module <module name> to module number <module num> of firewall.", "<module name> <module num>"},
+	 "Insert module <module name> to module number <module num> of firewall.", "<module name>"},
 
 	{{"insert-rule",	required_argument,	NULL, 'i' },
-	 "Insert rule as rule number <rule num> of module <module name>.", "<module name> <rule num>"},
+	 "Insert rule as rule number <rule num> of module <module name>.", "<module name>"},
 
 	{{"edit-module",	required_argument,	NULL, 'E' },
 	 "Edit module <module name>.", "<module name> [options]"},
 
 	{{"edit-rule",	required_argument,	NULL, 'e' },
-	 "Edit rule <rule num> of module <module name>.", "<module name> <rule num> [options]"},
+	 "Edit rule <rule num> of module <module name>.", "<module name> [options]"},
 
 	{{"networkif",	required_argument,	NULL, 'n' },
 	 "Operate on device <ifname>", "<ifname>"},
@@ -68,10 +68,13 @@ static const struct option_wrapper long_options[] = {
 	 "Quiet mode (no output)"},
 
 	{{"sport",    required_argument,	NULL,  1  },
-	 "Source port number", "<file>"},
+	 "Source port number", "<sport>"},
 
 	{{"dport",    required_argument,	NULL,  2  },
-	 "Destination port number", "<file>"},
+	 "Destination port number", "<dport>"},
+
+	{{"index",    required_argument,	NULL,  3  },
+	 "Rule / Module index", "<index>"},
 
 	{{0, 0, NULL,  0 }, NULL, false}
 };
@@ -109,6 +112,8 @@ int main(int argc, char **argv)
 			.ifindex	= 0,
 		},
 		.rule_action = XDP_ABORTED,
+		.index = -1,
+		.new_index = -1,
 	};
 
 	memset(&cfg.rule_key.src_ipv4_lpm, 0, ipv4_lpm_key_size);
@@ -171,24 +176,17 @@ int main(int argc, char **argv)
 				return err;
 			}
 			break;
-		case ACTIVATE_MODULE: {
-			int map_fd;
-			union ipv4_lpm_key key;
-			struct class_lpm_value val;
-
-			key.word[0] = 32;
-			inet_pton(AF_INET, "192.168.1.1", &key.word[1]);
-
-			map_fd = bpf_obj_get("/sys/fs/bpf/xdp-mfw/classifier/src_ipv4_lpm_vector");
-
-			if (bpf_map_lookup_elem(map_fd, &key, &val) == -1)
-				printf("NO IPv4 LPM Wildcard\n");
-			else
-				printf("%016llx %d\n", val.vector.word[0], val.prefixlen);
-			
+		case DELETE_RULE:
+			if (cfg.index == -1) {
+				fprintf(stderr, "ERR: Rule index is not set. (--index option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			err = delete_rule(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: deleting rule from module %s.\n", cfg.module_name);
+				return err;
+			}
 			break;
-		}
-			;
 		default:
 			fprintf(stderr, "Command is required. Use -h option to see available command flags.\n");
 			return EXIT_FAIL_OPTION;

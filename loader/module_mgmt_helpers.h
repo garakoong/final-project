@@ -28,7 +28,9 @@
 #define PATH_MAX	4096
 #endif
 
-int add_classifier_src_ip_vector(struct config *cfg) {
+
+
+int add_classifier_src_ip_vector(struct config *cfg, int value) {
 	
 	int len;
 	int map_fd;
@@ -55,9 +57,14 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.src_ipv4, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
+
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				vector.word[target_word] |= (__u64)1 << target_bit;
+
+				if (value)
+					vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.src_ipv4, &vector, 0)) {
 					fprintf(stderr, "ERR: Updating src_ipv4_vector map.\n");
@@ -82,7 +89,11 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 				lpm_val.prefixlen = cfg->rule_key.src_ipv4_lpm.word[0];
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+
+				if (value)
+					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.src_ipv4_lpm, &lpm_val, 0)) {
 					fprintf(stderr, "ERR: Updating src_ipv4_lpm_vector map.\n");
@@ -99,7 +110,10 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 					if (key.word[0] <= cfg->rule_key.src_ipv4_lpm.word[0])
 						break;
 
-					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					if (value)
+						lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					else
+						lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 					if (bpf_map_update_elem(map_fd, &key, &lpm_val, 0)) {
 						fprintf(stderr, "ERR: Updating src_ipv4_lpm_vector map.\n");
 						return EXIT_FAIL_BPF;
@@ -131,7 +145,10 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 				}
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				vector.word[target_word] |= (__u64)1 << target_bit;
+				if (value)
+					vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.src_ipv6, &vector, 0)) {
 					fprintf(stderr, "ERR: Updating src_ipv6_vector map.\n");
@@ -156,7 +173,10 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 				lpm_val.prefixlen = cfg->rule_key.src_ipv6_lpm.word[0];
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				if (value)
+					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.src_ipv6_lpm, &lpm_val, 0)) {
 					fprintf(stderr, "ERR: Updating src_ipv6_lpm_vector map.\n");
@@ -176,7 +196,10 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 					if (key.word[0] <= cfg->rule_key.src_ipv4_lpm.word[0])
 						break;
 						
-					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					if (value)
+						lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					else
+						lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 					if (bpf_map_update_elem(map_fd, &key, &lpm_val, 0)) {
 						fprintf(stderr, "ERR: Updating src_ipv6_lpm_vector map.\n");
 						return EXIT_FAIL_BPF;
@@ -195,7 +218,7 @@ int add_classifier_src_ip_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
-int add_classifier_dst_ip_vector(struct config *cfg) {
+int add_classifier_dst_ip_vector(struct config *cfg, int value) {
 
 	int len;
 	int map_fd;
@@ -224,7 +247,10 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 				}
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				vector.word[target_word] |= (__u64)1 << target_bit;
+				if (value)
+					vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.dst_ipv4, &vector, 0)) {
 					fprintf(stderr, "ERR: Updating dst_ipv4_vector map.\n");
@@ -249,7 +275,10 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 				lpm_val.prefixlen = cfg->rule_key.dst_ipv4_lpm.word[0];
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				if (value)
+					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.dst_ipv4_lpm, &lpm_val, 0)) {
 					fprintf(stderr, "ERR: Updating dst_ipv4_lpm_vector map.\n");
@@ -266,7 +295,10 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 					if (key.word[0] <= cfg->rule_key.dst_ipv4_lpm.word[0])
 						break;
 
-					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					if (value)
+						lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					else
+						lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 					if (bpf_map_update_elem(map_fd, &key, &lpm_val, 0)) {
 						fprintf(stderr, "ERR: Updating dst_ipv4_lpm_vector map.\n");
 						return EXIT_FAIL_BPF;
@@ -298,7 +330,10 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 				}
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				vector.word[target_word] |= (__u64)1 << target_bit;
+				if (value)
+					vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.dst_ipv6, &vector, 0)) {
 					fprintf(stderr, "ERR: Updating dst_ipv6_vector map.\n");
@@ -323,7 +358,10 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 				lpm_val.prefixlen = cfg->rule_key.dst_ipv6_lpm.word[0];
 				int target_word = cfg->new_index / 64;
 				int target_bit = 63 - (cfg->new_index % 64);
-				lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				if (value)
+					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+				else
+					lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 				if (bpf_map_update_elem(map_fd, &cfg->rule_key.dst_ipv6_lpm, &lpm_val, 0)) {
 					fprintf(stderr, "ERR: Updating dst_ipv6_lpm_vector map.\n");
@@ -343,7 +381,10 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 					if (key.word[0] <= cfg->rule_key.dst_ipv4_lpm.word[0])
 						break;
 						
-					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					if (value)
+						lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
+					else
+						lpm_val.vector.word[target_word] &= ~((__u64)1 << target_bit);
 					if (bpf_map_update_elem(map_fd, &key, &lpm_val, 0)) {
 						fprintf(stderr, "ERR: Updating dst_ipv6_lpm_vector map.\n");
 						return EXIT_FAIL_BPF;
@@ -362,7 +403,7 @@ int add_classifier_dst_ip_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
-int add_classifier_sport_vector(struct config *cfg) {
+int add_classifier_sport_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
@@ -388,7 +429,10 @@ int add_classifier_sport_vector(struct config *cfg) {
 
 			int target_word = cfg->new_index / 64;
 			int target_bit = 63 - (cfg->new_index % 64);
-			vector.word[target_word] |= (__u64)1 << target_bit;
+			if (value)
+				vector.word[target_word] |= (__u64)1 << target_bit;
+			else
+				vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 			if (bpf_map_update_elem(map_fd, &cfg->rule_key.sport, &vector, 0)) {
 				fprintf(stderr, "ERR: Updating tcp_sport_vector map.\n");
@@ -415,7 +459,10 @@ int add_classifier_sport_vector(struct config *cfg) {
 
 			int target_word = cfg->new_index / 64;
 			int target_bit = 63 - (cfg->new_index % 64);
-			vector.word[target_word] |= (__u64)1 << target_bit;
+			if (value)
+				vector.word[target_word] |= (__u64)1 << target_bit;
+			else
+				vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 			if (bpf_map_update_elem(map_fd, &cfg->rule_key.sport, &vector, 0)) {
 				fprintf(stderr, "ERR: Updating udp_sport_vector map.\n");
@@ -430,7 +477,7 @@ int add_classifier_sport_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
-int add_classifier_dport_vector(struct config *cfg) {
+int add_classifier_dport_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
@@ -456,12 +503,16 @@ int add_classifier_dport_vector(struct config *cfg) {
 
 			int target_word = cfg->new_index / 64;
 			int target_bit = 63 - (cfg->new_index % 64);
-			vector.word[target_word] |= (__u64)1 << target_bit;
+			if (value)
+				vector.word[target_word] |= (__u64)1 << target_bit;
+			else
+				vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 			if (bpf_map_update_elem(map_fd, &cfg->rule_key.dport, &vector, 0)) {
 				fprintf(stderr, "ERR: Updating tcp_dport_vector map.\n");
 				return EXIT_FAIL_BPF;
 			}
+
 			if (cfg->rule_key.proto == IPPROTO_TCP)
 				break;
 		}
@@ -483,7 +534,10 @@ int add_classifier_dport_vector(struct config *cfg) {
 
 			int target_word = cfg->new_index / 64;
 			int target_bit = 63 - (cfg->new_index % 64);
-			vector.word[target_word] |= (__u64)1 << target_bit;
+			if (value)
+				vector.word[target_word] |= (__u64)1 << target_bit;
+			else
+				vector.word[target_word] &= ~((__u64)1 << target_bit);
 
 			if (bpf_map_update_elem(map_fd, &cfg->rule_key.dport, &vector, 0)) {
 				fprintf(stderr, "ERR: Updating udp_dport_vector map.\n");
@@ -498,7 +552,7 @@ int add_classifier_dport_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
-int add_classifier_dev_vector(struct config *cfg) {
+int add_classifier_dev_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
@@ -530,33 +584,33 @@ int add_classifier_dev_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
-int add_classifier_vectors(struct config *cfg) {
+int add_classifier_vectors(struct config *cfg, int value) {
 	int err;
-	err = add_classifier_src_ip_vector(cfg);
+	err = add_classifier_src_ip_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier src ip vector.\n");
 		return err;
 	}
 
-	err = add_classifier_dst_ip_vector(cfg);
+	err = add_classifier_dst_ip_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier dst ip vector.\n");
 		return err;
 	}
 
-	err = add_classifier_sport_vector(cfg);
+	err = add_classifier_sport_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier source port vector.\n");
 		return err;
 	}
 
-	err = add_classifier_dport_vector(cfg);
+	err = add_classifier_dport_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier dest port vector.\n");
 		return err;
 	}
 
-	err = add_classifier_dev_vector(cfg);
+	err = add_classifier_dev_vector(cfg, value);
 	if (err) {
 		fprintf(stderr, "ERR: Updating classifier device vector.\n");
 		return err;
@@ -653,7 +707,7 @@ int add_module(struct config *cfg, int isMain)
 		return EXIT_FAIL_BPF;
 	}
 
-	err = add_classifier_vectors(cfg);
+	err = add_classifier_vectors(cfg, 1);
 	if (err)
 		return err;
 

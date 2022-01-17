@@ -19,6 +19,10 @@ int verbose = 1;
 
 #define BUFSIZE 30
 
+__u16 swapendian16(__u16 num) {
+    return (num>>8) | (num<<8);
+}
+
 void _print_options(const struct option_wrapper *long_options, bool required)
 {
 	int i, pos;
@@ -148,6 +152,12 @@ void parse_cmdline_args(int argc, char **argv,
 				goto error;
 			}
 			cfg->cmd = DELETE_RULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 'I':
 			if (cfg->cmd != PRESERVED) {
@@ -274,18 +284,24 @@ void parse_cmdline_args(int argc, char **argv,
 			}
 			break;
 		case 1: /* --sport */
-			cfg->rule_key.sport = atoi(optarg);
+			cfg->rule_key.sport = swapendian16(atoi(optarg));
 			if (cfg->rule_key.sport <= 0 || cfg->rule_key.sport > 65535) {
 				fprintf(stderr, "ERR: Invalid source port number (%d).\n", cfg->rule_key.sport);
 				goto error;
 			}
 			break;
 		case 2: /* --dport */
-			cfg->rule_key.dport = atoi(optarg);
+			cfg->rule_key.dport = swapendian16(atoi(optarg));
 			if (cfg->rule_key.dport <= 0 || cfg->rule_key.dport > 65535) {
 				fprintf(stderr, "ERR: Invalid dest port number (%d).\n", cfg->rule_key.dport);
 				goto error;
 			}
+			break;
+		case 3: /* --index */
+			cfg->index = atoi(optarg);
+			break;
+		case 4: /* --new-index */
+			cfg->new_index = atoi(optarg);
 			break;
 		case 'f':
 			prefixlen = -1;

@@ -34,7 +34,7 @@ void src_ip_lookup(struct iphdr *iph, struct ipv6hdr *ip6h, struct class_vector 
 
         __builtin_memset(&lpm_key, 0, ipv6_lpm_key_size);
 
-        lpm_key.word[0] = 0;
+        lpm_key.word[0] = 128;
         lpm_key.word[1] = ip6h->saddr.s6_addr32[0];
         lpm_key.word[2] = ip6h->saddr.s6_addr32[1];
         lpm_key.word[3] = ip6h->saddr.s6_addr32[2];
@@ -42,7 +42,7 @@ void src_ip_lookup(struct iphdr *iph, struct ipv6hdr *ip6h, struct class_vector 
 
         lookup_res = bpf_map_lookup_elem(&src_ipv6_vector, &ip6h->saddr);
 
-        lpm_val = bpf_map_lookup_elem(&src_ipv4_lpm_vector, &lpm_key);
+        lpm_val = bpf_map_lookup_elem(&src_ipv6_lpm_vector, &lpm_key);
         if (lpm_val) {
             #pragma clang loop unroll(full)
             for (w=0; w<MAX_CLASS_WORD; w++) {
@@ -104,7 +104,7 @@ void dst_ip_lookup(struct iphdr *iph, struct ipv6hdr *ip6h, struct class_vector 
 
         lookup_res = bpf_map_lookup_elem(&dst_ipv6_vector, &ip6h->daddr);
 
-        lpm_val = bpf_map_lookup_elem(&dst_ipv4_lpm_vector, &lpm_key);
+        lpm_val = bpf_map_lookup_elem(&dst_ipv6_lpm_vector, &lpm_key);
         if (lpm_val) {
             #pragma clang loop unroll(full)
             for (w=0; w<MAX_CLASS_WORD; w++) {
@@ -168,13 +168,13 @@ void dst_port_lookup(struct tcphdr *tcph, struct udphdr *udph, struct class_vect
 
     struct class_vector *wildcard_res = NULL;
     struct class_vector *lookup_res;
-    __u16 key = 0;
-    int w;
+    __u16 *key = 0;
+    __u32 w = 0;
 
     if (tcph != NULL) {
-        wildcard_res = bpf_map_lookup_elem(&tcp_sport_vector, &key);
+        wildcard_res = bpf_map_lookup_elem(&tcp_dport_vector, &key);
 
-        lookup_res = bpf_map_lookup_elem(&tcp_sport_vector, &tcph->dest);
+        lookup_res = bpf_map_lookup_elem(&tcp_dport_vector, &tcph->dest);
 
         if (wildcard_res) {
             #pragma clang loop unroll(full)
@@ -187,9 +187,9 @@ void dst_port_lookup(struct tcphdr *tcph, struct udphdr *udph, struct class_vect
             }
         }
     } else if (udph != NULL) {
-        wildcard_res = bpf_map_lookup_elem(&udp_sport_vector, &key);
+        wildcard_res = bpf_map_lookup_elem(&udp_dport_vector, &key);
 
-        lookup_res = bpf_map_lookup_elem(&udp_sport_vector, &udph->dest);
+        lookup_res = bpf_map_lookup_elem(&udp_dport_vector, &udph->dest);
 
         if (wildcard_res) {
             #pragma clang loop unroll(full)

@@ -89,10 +89,15 @@ int fw_classifier(struct xdp_md *ctx)
 	__builtin_memset(&lookup_res, 0xff, sizeof(struct class_vector));
 	
 	src_ip_lookup(iphdr, ipv6hdr, &lookup_res);
+	bpf_printk("src [%lx]\n", lookup_res.word[0]);
 	dst_ip_lookup(iphdr, ipv6hdr, &lookup_res);
+	bpf_printk("dst [%lx]\n", lookup_res.word[0]);
 	src_port_lookup(tcphdr, udphdr, &lookup_res);
+	bpf_printk("sport [%lx]\n", lookup_res.word[0]);
 	dst_port_lookup(tcphdr, udphdr, &lookup_res);
+	bpf_printk("dport [%lx]\n", lookup_res.word[0]);
 	device_lookup(ctx, &lookup_res);
+	bpf_printk("dev [%lx]\n", lookup_res.word[0]);
 
 	int w = 0;
 	#pragma clang loop unroll(full)
