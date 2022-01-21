@@ -143,6 +143,7 @@ int main(int argc, char **argv)
 			}
 			memset(&cfg.progsec, 0, sizeof(cfg.progsec));
 			cfg.rule_key.ifindex = 0;
+			cfg.cmd = ADD_MODULE;
 			err = add_module(&cfg, 1);
 			if (err) {
 				fprintf(stderr, "ERR: adding Module 'MAIN'.\n");
@@ -164,6 +165,13 @@ int main(int argc, char **argv)
 			err = add_module(&cfg, 0);
 			if (err) {
 				fprintf(stderr, "ERR: adding firewall module.\n");
+				return err;
+			}
+			break;
+		case DELETE_MODULE:
+			err = delete_module(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: deleting firewall module.\n");
 				return err;
 			}
 			break;

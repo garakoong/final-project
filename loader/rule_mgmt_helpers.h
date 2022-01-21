@@ -20,13 +20,69 @@
 
 #include "../common/common_user_bpf_xdp.h"
 #include "../common/common_libbpf.h"
-#include "../common/common_helpers.h"
 #include "../common/module_structs.h"
 #include "loader_helpers.h"
 
 #ifndef PATH_MAX
 #define PATH_MAX	4096
 #endif
+
+void shift_right_vector(int index, struct rule_vector *vector) {
+
+	__u64 val = 0;
+	int target_word = index / 64;
+	int target_bit = 63 - (index % 64);
+	int i;
+
+	for (i=target_word; i<MAX_RULE_WORD; i++) {
+		if (i == target_word) {
+			__u64 mask = 0;
+			if (target_bit < 63) {
+				mask = ((__u64)1 << target_bit) - 1;
+			} else {
+				mask = (((__u64)1 << 63) - 1) | ((__u64)1 << 63);
+			}
+			__u64 left_word = vector->word[i] & ~mask;
+			__u64 right_word = (vector->word[i] >> 1) & mask;
+			val = vector->word[i] % 2;
+			vector->word[i] = (left_word | right_word);
+		} else {
+			__u64 new_word = (vector->word[i] >> 1) | (val << 63);
+			val = vector->word[i] % 2;
+			vector->word[i] = new_word;
+		}
+	}
+
+	return;
+}
+
+void shift_left_vector(int index, struct rule_vector *vector) {
+
+	__u64 val = 0;
+	int target_word = index / 64;
+	int target_bit = 63 - (index % 64);
+	int i;
+
+	for (i=MAX_RULE_WORD-1; i>=target_word; i--) {
+		if (i == target_word) {
+			__u64 mask = 0;
+			if (target_bit < 63) {
+				mask = ((__u64)1 << target_bit) - 1;
+			} else {
+				mask = (((__u64)1 << 63) - 1) | ((__u64)1 << 63);
+			}
+			__u64 left_word = vector->word[i] & ~mask & ~((__u64)1 << target_bit);
+			__u64 right_word = (vector->word[i] << 1) & mask;
+			vector->word[i] = (left_word | (right_word | val));
+		} else {
+			__u64 new_word = (vector->word[i] << 1) | val;
+			val = vector->word[i] >> 63;
+			vector->word[i] = new_word;
+		}
+	}
+
+	return;
+}
 
 int set_src_ip_vector(struct config *cfg, int value) {
 	
@@ -812,7 +868,6 @@ int delete_src_ip_vector(struct config *cfg) {
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
 				shift_left_vector(cfg->index, &lpm_val.vector);
-				printf("%016llx\n", lpm_val.vector.word[0]);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -1435,7 +1490,7 @@ int delete_rule(struct config *cfg)
 
 	module_map_fd = bpf_obj_get(map_path);
 	if (module_map_fd < 0) {
-		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
 		return EXIT_FAIL_BPF;
 	}
 
@@ -1493,7 +1548,7 @@ int delete_rule(struct config *cfg)
 	}
 
 	int new_rule_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
-										sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
+										sizeof(struct rule_info), MAX_RULE_ENTRIES, 0);
 	if (new_rule_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'rules_info' map\n");
 		return EXIT_FAIL_BPF;
@@ -1538,12 +1593,6 @@ int delete_rule(struct config *cfg)
 		}
 	}
 
-	minfo.rule_count = minfo.rule_count - 1;
-	if(bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
-		fprintf(stderr, "ERR: Updating Module info.\n");
-		return EXIT_FAIL_BPF;
-	}
-
 	struct config loader_cfg = {
 		.cmd		= ADD_MODULE,
 		.new_index 	= module_index,
@@ -1551,11 +1600,18 @@ int delete_rule(struct config *cfg)
 	};
 
 	strncpy(loader_cfg.module_new_name, cfg->module_name, MAX_MODULE_NAME);
-	err = module_loader(&loader_cfg);
+	err = module_loader(&loader_cfg, -1);
 	if (err) {
 		fprintf(stderr, "ERR: Reloading module '%s'.\n", cfg->module_name);
 		return err;
 	}
+
+	minfo.rule_count = minfo.rule_count - 1;
+	if(bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
+		fprintf(stderr, "ERR: Updating Module info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	return EXIT_OK;
 }
 
@@ -1648,7 +1704,6 @@ int insert_src_ip_vector(struct config *cfg) {
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
 				shift_right_vector(cfg->new_index, &lpm_val.vector);
-				printf("%016llx\n", lpm_val.vector.word[0]);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -2348,7 +2403,7 @@ int insert_rule(struct config *cfg)
 	}
 
 	int new_rule_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
-										sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
+										sizeof(struct rule_info), MAX_RULE_ENTRIES, 0);
 	if (new_rule_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'rules_info' map\n");
 		return EXIT_FAIL_BPF;
@@ -2402,12 +2457,6 @@ int insert_rule(struct config *cfg)
 		}
 	}
 
-	minfo.rule_count = minfo.rule_count + 1;
-	if(bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
-		fprintf(stderr, "ERR: Updating Module info.\n");
-		return EXIT_FAIL_BPF;
-	}
-
 	struct config loader_cfg = {
 		.cmd		= ADD_MODULE,
 		.new_index 	= module_index,
@@ -2415,11 +2464,18 @@ int insert_rule(struct config *cfg)
 	};
 
 	strncpy(loader_cfg.module_new_name, cfg->module_name, MAX_MODULE_NAME);
-	err = module_loader(&loader_cfg);
+	err = module_loader(&loader_cfg, -1);
 	if (err) {
 		fprintf(stderr, "ERR: Reloading module '%s'.\n", cfg->module_name);
 		return err;
 	}
+
+	minfo.rule_count = minfo.rule_count + 1;
+	if(bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
+		fprintf(stderr, "ERR: Updating Module info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	return EXIT_OK;
 }
 

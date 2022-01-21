@@ -145,6 +145,12 @@ void parse_cmdline_args(int argc, char **argv,
 				goto error;
 			}
 			cfg->cmd = DELETE_MODULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 'd':
 			if (cfg->cmd != PRESERVED) {

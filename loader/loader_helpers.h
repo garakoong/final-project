@@ -72,7 +72,41 @@ int pin_maps_in_bpf_object(struct bpf_object *bpf_obj, struct config *cfg)
 	return 0;
 }
 
-int fw_loader()
+int unpin_maps_in_bpf_object(struct bpf_object *bpf_obj, struct config *cfg)
+{
+	char map_filename[PATH_MAX];
+	int err, len;
+	struct bpf_map *map;
+
+	bpf_object__for_each_map(map, bpf_obj) {
+
+		len = snprintf(map_filename, PATH_MAX, "%s/%s",
+				cfg->pin_dir, bpf_map__name(map));
+		if (len < 0) {
+			fprintf(stderr, "ERR: creating map_name\n");
+			return EXIT_FAIL_OPTION;
+		}
+
+		/* Existing/previous XDP prog might not have cleaned up */
+		if (access(map_filename, F_OK ) != -1 ) {
+			if (verbose)
+				printf(" - Unpinning map '%s' in %s/\n",
+					bpf_map__name(map), cfg->pin_dir);
+
+			/* Basically calls unlink(3) on map_filename */
+			err = bpf_map__unpin(map, map_filename);
+			if (err) {
+				fprintf(stderr, "ERR: UNpinning map '%s' in %s\n", bpf_map__name(map), cfg->pin_dir);
+				return EXIT_FAIL_BPF;
+			}
+		}
+			
+	}
+
+	return 0;
+}
+
+int fw_loader(int reuse_maps)
 {
 	struct bpf_object *bpf_obj;
 	int err, len;
@@ -83,7 +117,7 @@ int fw_loader()
 	char progarr_path[PATH_MAX];
 
 	struct config cfg = {
-		.reuse_maps = 0,
+		.reuse_maps = reuse_maps,
 	};
 
 	cfg.xdp_flags &= ~XDP_FLAGS_MODES;
@@ -265,7 +299,7 @@ int root_loader(struct config *cfg)
 			return EXIT_FAIL_BPF;
 		}
 
-		err = fw_loader();
+		err = fw_loader(0);
 		if (err) {
 			return err;
 		}
@@ -311,7 +345,7 @@ int root_loader(struct config *cfg)
 	return EXIT_OK;
 }
 
-int module_loader(struct config *cfg)
+int module_loader(struct config *cfg, int progarr_fd)
 {
 	struct bpf_object *bpf_obj;
 	int err, len;
@@ -320,7 +354,7 @@ int module_loader(struct config *cfg)
 	int prog_fd = -1;
 	int module_exists = 0;
 
-	int prog_map_fd;
+	int prog_map_fd = progarr_fd;
 	char progarr_path[PATH_MAX];
 
 	cfg->xdp_flags &= ~XDP_FLAGS_MODES;
@@ -329,7 +363,14 @@ int module_loader(struct config *cfg)
 	/* Set default BPF-ELF object file and BPF program name */
 	strncpy(cfg->filename, module_filename, sizeof(cfg->filename));
 
-	len = snprintf(cfg->pin_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_new_name);
+	if (cfg->cmd == ADD_MODULE)
+		len = snprintf(cfg->pin_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_new_name);
+	else if (cfg->cmd == DELETE_MODULE)
+		len = snprintf(cfg->pin_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_name);
+	else {
+		fprintf(stderr, "ERR: Invalid command.\n");
+		return EXIT_FAIL_OPTION;
+	}
 	if (len < 0) {
 		fprintf(stderr, "ERR: creating pin dirname\n");
 		return EXIT_FAIL_OPTION;
@@ -342,21 +383,44 @@ int module_loader(struct config *cfg)
 	
 	if (cfg->cmd == DELETE_MODULE) {
 		if (!module_exists) {
-			fprintf(stderr, "ERR: Module '%s' not exists.\n", cfg->module_new_name);
+			fprintf(stderr, "ERR: Module '%s' not exists.\n", cfg->module_name);
 			return EXIT_FAIL_OPTION;
-		} else if (strcmp(cfg->module_new_name, "MAIN") == 0) {
+		} else if (strcmp(cfg->module_name, "MAIN") == 0) {
 			fprintf(stderr, "ERR: Module 'MAIN' can't be deleted.\n");
 			return EXIT_FAIL_OPTION;
+		}
+
+		bpf_obj = load_bpf_object_file(cfg->filename, offload_ifindex);
+		if (!bpf_obj) {
+			fprintf(stderr, "ERR: loading file: %s.\n", cfg->filename);
+			return EXIT_FAIL_BPF;
+		}
+
+		err = unpin_maps_in_bpf_object(bpf_obj, cfg);
+		if (err) {
+			fprintf(stderr, "ERR: unpinning maps.\n");
+			return err;
+		}
+
+		char cmd[10+PATH_MAX];
+		sprintf(cmd, "rmdir %s", cfg->pin_dir);
+		err = system(cmd);
+		if (err) {
+			fprintf(stderr, "ERR: Deleting module '%s' directory.\n", cfg->module_name);
+			return err;
 		}
 			
 		return EXIT_OK;
 	}
 
-	if (strcmp(cfg->module_new_name, "MAIN") == 0) {
-		if (module_exists && !cfg->reuse_maps)
+	if (module_exists && !cfg->reuse_maps) {
+		if (strcmp(cfg->module_new_name, "MAIN") == 0)
 			return 0;
+		else {
+			fprintf(stderr, "ERR: Module already exists.\n");
+			return EXIT_FAIL_OPTION;
+		}
 	}
-	
 
 	if (cfg->reuse_maps)
 		bpf_obj = load_bpf_object_file_reuse_maps(cfg->filename,
@@ -369,10 +433,6 @@ int module_loader(struct config *cfg)
 		fprintf(stderr, "ERR: loading file: %s\n", cfg->filename);
 		return EXIT_FAIL_BPF;
 	}
-
-	if (verbose)
-		printf("Success: Loaded BPF-object(%s) and used section(%s)\n",
-		       cfg->filename, cfg->progsec);
 
 	if (cfg->progsec[0])
 		/* Find a matching BPF prog section name */
@@ -400,10 +460,12 @@ int module_loader(struct config *cfg)
 		return EXIT_FAIL_OPTION;
 	}
 
-	prog_map_fd = bpf_obj_get(progarr_path);
 	if (prog_map_fd < 0) {
-		fprintf(stderr, "ERR: Opening firewall modules map.\n");
-		return EXIT_FAIL_BPF;
+		prog_map_fd = bpf_obj_get(progarr_path);
+		if (prog_map_fd < 0) {
+			fprintf(stderr, "ERR: Opening firewall modules map.\n");
+			return EXIT_FAIL_BPF;
+		}
 	}
 
 	if (bpf_map_update_elem(prog_map_fd, &cfg->new_index, &prog_fd, 0)) {
