@@ -175,6 +175,18 @@ int main(int argc, char **argv)
 				return err;
 			}
 			break;
+		case INSERT_MODULE:
+			if (cfg.index == -1) {
+				fprintf(stderr, "ERR: Module index is not set. (--index option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			}
+
+			err = insert_module(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: inserting firewall module.\n");
+				return err;
+			}
+			break;
 		case ADD_RULE:
 			if (cfg.rule_action == XDP_ABORTED) {
 				fprintf(stderr, "ERR: Rule's action is not set. (-j option is required.)\n");
@@ -199,8 +211,8 @@ int main(int argc, char **argv)
 			}
 			break;
 		case INSERT_RULE:
-			if (cfg.new_index == -1) {
-				fprintf(stderr, "ERR: Rule index is not set. (--new-index option is required.)\n");
+			if (cfg.index == -1) {
+				fprintf(stderr, "ERR: Rule index is not set. (--index option is required.)\n");
 				return EXIT_FAIL_OPTION;
 			}
 			err = insert_rule(&cfg);

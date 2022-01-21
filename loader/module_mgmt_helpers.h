@@ -843,7 +843,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
@@ -854,6 +854,19 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 			}
 		}
 		ipv4_prev = ipv4_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
+
+			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_prev = ipv4_key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -945,7 +958,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
@@ -955,6 +968,18 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 			}
 		}
 		ipv6_prev = ipv6_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_prev = ipv6_key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1060,7 +1085,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
@@ -1070,6 +1095,18 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 			}
 		}
 		ipv4_prev = ipv4_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_prev = ipv4_key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1104,7 +1141,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
 			shift_left_class_vector(cfg->index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
@@ -1114,6 +1151,18 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 			}
 		}
 		ipv4_lpm_prev = ipv4_lpm_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
+				shift_left_class_vector(cfg->index, &lpm_val.vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_lpm_prev = ipv4_lpm_key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1148,7 +1197,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
@@ -1158,6 +1207,18 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 			}
 		}
 		ipv6_prev = ipv6_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_prev = ipv6_key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1192,7 +1253,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
 			shift_left_class_vector(cfg->index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
@@ -1202,6 +1263,18 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 			}
 		}
 		ipv6_lpm_prev = ipv6_lpm_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
+				shift_left_class_vector(cfg->index, &lpm_val.vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_lpm_prev = ipv6_lpm_key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1246,7 +1319,7 @@ int delete_classifier_sport_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
@@ -1256,6 +1329,18 @@ int delete_classifier_sport_vector(struct config *cfg) {
 			}
 		}
 		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1290,7 +1375,7 @@ int delete_classifier_sport_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
@@ -1300,6 +1385,18 @@ int delete_classifier_sport_vector(struct config *cfg) {
 			}
 		}
 		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1344,7 +1441,7 @@ int delete_classifier_dport_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
@@ -1354,6 +1451,18 @@ int delete_classifier_dport_vector(struct config *cfg) {
 			}
 		}
 		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1388,7 +1497,7 @@ int delete_classifier_dport_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
 			shift_left_class_vector(cfg->index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
@@ -1398,6 +1507,18 @@ int delete_classifier_dport_vector(struct config *cfg) {
 			}
 		}
 		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1442,11 +1563,9 @@ int delete_classifier_dev_vector(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			printf("%d %016llx ", key, vector.word[0]);
 			shift_left_class_vector(cfg->index, &vector);
-			printf("%016llx\n", vector.word[0]);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -1454,6 +1573,18 @@ int delete_classifier_dev_vector(struct config *cfg) {
 			}
 		}
 		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
 	}
 
 	if (remove(map_path)) {
@@ -1733,868 +1864,1116 @@ int delete_module(struct config *cfg)
 	return EXIT_OK;
 }
 
-// int insert_classifier_src_ip_vector(struct config *cfg) {
-// 	int err, len;
-// 	int map_fd, new_map_fd;
-// 	char map_path[PATH_MAX];
-// 	__u32 ipv4_key, ipv4_prev;
-// 	struct in6_addr ipv6_key, ipv6_prev;
-// 	union ipv4_lpm_key ipv4_lpm_key, ipv4_lpm_prev;
-// 	union ipv6_lpm_key ipv6_lpm_key, ipv6_lpm_prev;
-// 	struct class_vector vector;
-// 	struct class_lpm_value lpm_val;
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'src_ipv4_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv4_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating src_ipv4_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening src_ipv4_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
-
-// 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv4_prev = ipv4_key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'src_ipv4_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'src_ipv4_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv4_lpm_key_size,
-// 								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'src_ipv4_lpm_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv4_lpm_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating src_ipv4_lpm_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening src_ipv4_lpm_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &lpm_val.vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv4_lpm_prev = ipv4_lpm_key;
-
-// 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
-// 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-// 				shift_right_class_vector(cfg->new_index, &lpm_val.vector);
-// 				printf("%016llx\n", lpm_val.vector.word[0]);
-// 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
-// 				if (err) {
-// 					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
-// 					return EXIT_FAIL_BPF;
-// 				}
-// 			}
-// 			ipv4_lpm_prev = ipv4_lpm_key;
-// 		}
-
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'src_ipv4_lpm_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'src_ipv4_lpm_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(struct in6_addr),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'src_ipv6_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv6_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating src_ipv6_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening src_ipv6_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv6_prev = ipv6_key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'src_ipv6_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'src_ipv6_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv6_lpm_key_size,
-// 								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'src_ipv6_lpm_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv6_lpm_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating src_ipv6_lpm_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening src_ipv6_lpm_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
-
-// 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &lpm_val.vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv6_lpm_prev = ipv6_lpm_key;
-
-// 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
-// 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-// 				shift_right_class_vector(cfg->new_index, &lpm_val.vector);
-// 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
-// 				if (err) {
-// 					fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
-// 					return EXIT_FAIL_BPF;
-// 				}
-// 			}
-// 			ipv6_lpm_prev = ipv6_lpm_key;
-// 		}
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'src_ipv6_lpm_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'src_ipv6_lpm_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	set_src_ip_vector(cfg, 1);
-
-// 	return EXIT_OK;
-// }
-
-// int insert_classifier_dst_ip_vector(struct config *cfg) {
-// 	int err, len;
-// 	int map_fd, new_map_fd;
-// 	char map_path[PATH_MAX];
-// 	__u32 ipv4_key, ipv4_prev;
-// 	struct in6_addr ipv6_key, ipv6_prev;
-// 	union ipv4_lpm_key ipv4_lpm_key, ipv4_lpm_prev;
-// 	union ipv6_lpm_key ipv6_lpm_key, ipv6_lpm_prev;
-// 	struct class_vector vector;
-// 	struct class_lpm_value lpm_val;
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'dst_ipv4_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv4_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating dst_ipv4_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening dst_ipv4_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv4_prev = ipv4_key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'dst_ipv4_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'dst_ipv4_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv4_lpm_key_size,
-// 								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'dst_ipv4_lpm_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv4_lpm_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating dst_ipv4_lpm_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening dst_ipv4_lpm_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &lpm_val.vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv4_lpm_prev = ipv4_lpm_key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'dst_ipv4_lpm_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'dst_ipv4_lpm_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(struct in6_addr),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'dst_ipv6_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv6_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating dst_ipv6_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening dst_ipv6_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv6_prev = ipv6_key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'dst_ipv6_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'dst_ipv6_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv6_lpm_key_size,
-// 								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'dst_ipv6_lpm_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv6_lpm_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating dst_ipv6_lpm_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening dst_ipv6_lpm_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &lpm_val.vector);
-// 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		ipv6_lpm_prev = ipv6_lpm_key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'dst_ipv6_lpm_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'dst_ipv6_lpm_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	set_dst_ip_vector(cfg, 1);
-
-// 	return EXIT_OK;
-// }
-
-// int insert_classifier_sport_vector(struct config *cfg) {
-// 	int err, len;
-// 	int map_fd, new_map_fd;
-// 	char map_path[PATH_MAX];
-// 	__u16 key, prev_key;
-// 	struct class_vector vector;
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'tcp_sport_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/tcp_sport_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating tcp_sport_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening tcp_sport_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		prev_key = key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'tcp_sport_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'tcp_sport_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'udp_sport_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/udp_sport_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating udp_sport_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening udp_sport_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		prev_key = key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'udp_sport_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'udp_sport_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	set_sport_vector(cfg, 1);
-
-// 	return EXIT_OK;
-// }
-
-// int insert_classifier_dport_vector(struct config *cfg) {
-// 	int err, len;
-// 	int map_fd, new_map_fd;
-// 	char map_path[PATH_MAX];
-// 	__u16 key, prev_key;
-// 	struct class_vector vector;
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'tcp_dport_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/tcp_dport_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating tcp_dport_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening tcp_dport_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		prev_key = key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'tcp_dport_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'tcp_dport_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'udp_dport_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/udp_dport_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating udp_dport_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening udp_dport_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		prev_key = key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'udp_dport_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'udp_dport_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	set_dport_vector(cfg, 1);
-
-// 	return EXIT_OK;
-// }
-
-// int insert_classifier_dev_vector(struct config *cfg) {
-// 	int err, len;
-// 	int map_fd, new_map_fd;
-// 	char map_path[PATH_MAX];
-// 	__u32 key, prev_key;
-// 	struct class_vector vector;
-
-// 	new_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
-// 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'dev_vector' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/dev_vector", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating dev_vector map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	map_fd = bpf_obj_get(map_path);
-// 	if (map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening dev_vector map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
-// 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-// 			shift_right_class_vector(cfg->new_index, &vector);
-// 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
-// 			if (err) {
-// 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		prev_key = key;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'dev_vector' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'dev_vector' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	close(map_fd);
-// 	close(new_map_fd);
-
-// 	set_dev_vector(cfg, 1);
-
-// 	return EXIT_OK;
-// }
-
-// int insert_classifier_vectors(struct config *cfg) {
-// 	int err;
-// 	err = insert_classifier_src_ip_vector(cfg);
-// 	if (err) {
-// 		fprintf(stderr, "ERR: Updating classifier src ip vector.\n");
-// 		return err;
-// 	}
-
-// 	err = insert_classifier_dst_ip_vector(cfg);
-// 	if (err) {
-// 		fprintf(stderr, "ERR: Updating classifier dst ip vector.\n");
-// 		return err;
-// 	}
-
-// 	err = insert_classifier_sport_vector(cfg);
-// 	if (err) {
-// 		fprintf(stderr, "ERR: Updating classifier source port vector.\n");
-// 		return err;
-// 	}
-
-// 	err = insert_classifier_dport_vector(cfg);
-// 	if (err) {
-// 		fprintf(stderr, "ERR: Updating classifier dest port vector.\n");
-// 		return err;
-// 	}
-
-// 	err = insert_classifier_dev_vector(cfg);
-// 	if (err) {
-// 		fprintf(stderr, "ERR: Updating classifier device vector.\n");
-// 		return err;
-// 	}
-
-// 	return EXIT_OK;
-// }
-
-// int insert_module(struct config *cfg)
-// {
-// 	int err, len;
-// 	int rule_map_fd;
-// 	int module_map_fd;
-// 	int module_index;
-// 	char map_path[PATH_MAX];
-// 	struct rule_info rinfo = {
-// 		.rule_key = cfg->rule_key,
-// 		.action = cfg->rule_action,
-// 	};
-// 	struct module_info minfo;
-
-// 	// get module index
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating modules_index map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	module_map_fd = bpf_obj_get(map_path);
-// 	if (module_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening modules_info map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	if (bpf_map_lookup_elem(module_map_fd, &cfg->module_name, &module_index)) {
-// 		fprintf(stderr, "ERR: Reading module index.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	if (module_index < 0) {
-// 		fprintf(stderr, "ERR: Module '%s' not found.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	// modules_info
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating modules_info map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-// 	module_map_fd = bpf_obj_get(map_path);
-// 	if (module_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening modules_info map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-// 	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo)) {
-// 		fprintf(stderr, "ERR: Reading modules info.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	if (strcmp(minfo.module_name, cfg->module_name)) {
-// 		fprintf(stderr, "ERR: Module name mismatch.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	if (minfo.rule_count >= MAX_MODULE) {
-// 		fprintf(stderr, "ERR: Firewall has reach maximum amount of module.");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	if (cfg->new_index >= minfo.rule_count) {
-// 		printf("WARN: Firewall has only %d modules. This rule would be appended to module instead.\n", minfo.rule_count);
-// 		err = add_rule(cfg, 0);
-// 		return err;
-// 	}
-
-// 	if (cfg->new_index < 0 || cfg->new_index >= MAX_MODULE) {
-// 		fprintf(stderr, "ERR: Invalid rule index (index=%d).\n", cfg->new_index);
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	len = snprintf(map_path, PATH_MAX, "%s/classifier/rules_info", pin_basedir);
-// 	if (len < 0) {
-// 		fprintf(stderr, "ERR: creating rules_info map path.\n");
-// 		return EXIT_FAIL_OPTION;
-// 	}
-
-// 	rule_map_fd = bpf_obj_get(map_path);
-// 	if (rule_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Opening rules_info map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	int new_rule_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
-// 										sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
-// 	if (new_rule_map_fd < 0) {
-// 		fprintf(stderr, "ERR: Creating new 'rules_info' map\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	err = insert_vectors(cfg);
-// 	if (err)
-// 		return err;
-
-// 	int i;
-// 	for (i=minfo.rule_count; i>=0; i--) {
-// 		int new_index = i;
-// 		if (i == cfg->new_index) {
-// 			struct rule_info new_rinfo = {
-// 				.rule_key = cfg->rule_key,
-// 				.action = cfg->rule_action,
-// 			};
-// 			if (bpf_map_update_elem(new_rule_map_fd, &new_index, &new_rinfo, 0)) {
-// 				fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
-// 				return EXIT_FAIL_BPF;
-// 			}
-// 		}
-// 		if (i >= cfg->new_index) new_index++;
-// 		if (bpf_map_lookup_elem(rule_map_fd, &i, &rinfo)) {
-// 			fprintf(stderr, "ERR: Reading old 'rules_info' map.\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 		if (bpf_map_update_elem(new_rule_map_fd, &new_index, &rinfo, 0)) {
-// 			fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	i = POLICY_RULE;
-// 	if (bpf_map_lookup_elem(rule_map_fd, &i, &rinfo)) {
-// 		fprintf(stderr, "ERR: Reading old 'rules_info' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-// 	if (bpf_map_update_elem(new_rule_map_fd, &i, &rinfo, 0)) {
-// 		fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	if (remove(map_path)) {
-// 		fprintf(stderr, "ERR: Removing previous 'rules_info' map\n");
-// 		return EXIT_FAIL_OPTION;
-// 	} else {
-// 		if (bpf_obj_pin(new_rule_map_fd, map_path)) {
-// 			fprintf(stderr, "ERR: Pinning new 'rules_info' map\n");
-// 			return EXIT_FAIL_BPF;
-// 		}
-// 	}
-
-// 	minfo.rule_count = minfo.rule_count + 1;
-// 	if(bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
-// 		fprintf(stderr, "ERR: Updating Module info.\n");
-// 		return EXIT_FAIL_BPF;
-// 	}
-
-// 	struct config loader_cfg = {
-// 		.cmd		= ADD_MODULE,
-// 		.new_index 	= module_index,
-// 		.reuse_maps = 1,
-// 	};
-
-// 	strncpy(loader_cfg.module_new_name, cfg->module_name, MAX_MODULE_NAME);
-// 	err = module_loader(&loader_cfg);
-// 	if (err) {
-// 		fprintf(stderr, "ERR: Reloading module '%s'.\n", cfg->module_name);
-// 		return err;
-// 	}
-// 	return EXIT_OK;
-// }
+int insert_classifier_src_ip_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u32 ipv4_key, ipv4_prev;
+	struct in6_addr ipv6_key, ipv6_prev;
+	union ipv4_lpm_key ipv4_lpm_key, ipv4_lpm_prev;
+	union ipv6_lpm_key ipv6_lpm_key, ipv6_lpm_prev;
+	struct class_vector vector;
+	struct class_lpm_value lpm_val;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'src_ipv4_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv4_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating src_ipv4_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening src_ipv4_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
+
+		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv4_prev = ipv4_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
+
+			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_prev = ipv4_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'src_ipv4_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'src_ipv4_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv4_lpm_key_size,
+								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'src_ipv4_lpm_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv4_lpm_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating src_ipv4_lpm_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening src_ipv4_lpm_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
+			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv4_lpm_prev = ipv4_lpm_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
+				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				printf("%016llx\n", lpm_val.vector.word[0]);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_lpm_prev = ipv4_lpm_key;
+		}
+
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'src_ipv4_lpm_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'src_ipv4_lpm_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(struct in6_addr),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'src_ipv6_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv6_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating src_ipv6_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening src_ipv6_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv6_prev = ipv6_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_prev = ipv6_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'src_ipv6_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'src_ipv6_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv6_lpm_key_size,
+								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'src_ipv6_lpm_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/src_ipv6_lpm_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating src_ipv6_lpm_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening src_ipv6_lpm_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
+
+		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
+			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv6_lpm_prev = ipv6_lpm_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
+				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_lpm_prev = ipv6_lpm_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'src_ipv6_lpm_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'src_ipv6_lpm_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
+int insert_classifier_dst_ip_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u32 ipv4_key, ipv4_prev;
+	struct in6_addr ipv6_key, ipv6_prev;
+	union ipv4_lpm_key ipv4_lpm_key, ipv4_lpm_prev;
+	union ipv6_lpm_key ipv6_lpm_key, ipv6_lpm_prev;
+	struct class_vector vector;
+	struct class_lpm_value lpm_val;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'dst_ipv4_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv4_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating dst_ipv4_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening dst_ipv4_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv4_prev = ipv4_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_prev = ipv4_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'dst_ipv4_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'dst_ipv4_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv4_lpm_key_size,
+								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'dst_ipv4_lpm_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv4_lpm_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating dst_ipv4_lpm_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening dst_ipv4_lpm_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
+			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv4_lpm_prev = ipv4_lpm_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
+				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv4_lpm_prev = ipv4_lpm_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'dst_ipv4_lpm_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'dst_ipv4_lpm_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(struct in6_addr),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'dst_ipv6_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv6_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating dst_ipv6_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening dst_ipv6_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv6_prev = ipv6_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_prev = ipv6_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'dst_ipv6_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'dst_ipv6_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, ipv6_lpm_key_size,
+								sizeof(struct class_lpm_value), MAX_MODULE_ENTRIES, BPF_F_NO_PREALLOC);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'dst_ipv6_lpm_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/dst_ipv6_lpm_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating dst_ipv6_lpm_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening dst_ipv6_lpm_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
+			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		ipv6_lpm_prev = ipv6_lpm_key;
+
+		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
+				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			ipv6_lpm_prev = ipv6_lpm_key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'dst_ipv6_lpm_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'dst_ipv6_lpm_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
+int insert_classifier_sport_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u16 key, prev_key;
+	struct class_vector vector;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'tcp_sport_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/tcp_sport_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating tcp_sport_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening tcp_sport_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'tcp_sport_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'tcp_sport_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'udp_sport_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/udp_sport_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating udp_sport_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening udp_sport_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'udp_sport_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'udp_sport_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
+int insert_classifier_dport_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u16 key, prev_key;
+	struct class_vector vector;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'tcp_dport_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/tcp_dport_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating tcp_dport_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening tcp_dport_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'tcp_dport_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'tcp_dport_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u16),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'udp_dport_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/udp_dport_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating udp_dport_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening udp_dport_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'udp_dport_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'udp_dport_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
+int insert_classifier_dev_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u32 key, prev_key;
+	struct class_vector vector;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
+								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'dev_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/dev_vector", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating dev_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening dev_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_class_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_class_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'dev_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'dev_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
+int insert_classifier_vectors(struct config *cfg) {
+	int err;
+	err = insert_classifier_src_ip_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating classifier src ip vector.\n");
+		return err;
+	}
+
+	err = insert_classifier_dst_ip_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating classifier dst ip vector.\n");
+		return err;
+	}
+
+	err = insert_classifier_sport_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating classifier source port vector.\n");
+		return err;
+	}
+
+	err = insert_classifier_dport_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating classifier dest port vector.\n");
+		return err;
+	}
+
+	err = insert_classifier_dev_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating classifier device vector.\n");
+		return err;
+	}
+
+	err = set_classifier_vectors(cfg, 1);
+	if (err)
+		return err;
+
+	return EXIT_OK;
+}
+
+int insert_module(struct config *cfg)
+{
+
+	int err, len;
+	int fw_map_fd;
+	int index = 0;
+	int module_index;
+	int module_count;
+	int module_map_fd;
+	int index_map_fd;
+	char map_path[PATH_MAX];
+	struct module_info minfo;
+	cfg->new_index = cfg->index;
+
+	// get module index
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	index_map_fd = bpf_obj_get(map_path);
+	if (index_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (!bpf_map_lookup_elem(index_map_fd, &cfg->module_new_name, &module_index)) {
+		if (module_index >= 0) {
+			fprintf(stderr, "ERR: Module '%s' existed.\n", cfg->module_new_name);
+			return EXIT_FAIL_OPTION;
+		}
+	}
+
+	// modules_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/firewall_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating firewall_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	fw_map_fd = bpf_obj_get(map_path);
+	if (fw_map_fd < 0) {
+		fprintf(stderr, "ERR: creating firewall_info map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(fw_map_fd, &index, &module_count)) {
+		fprintf(stderr, "ERR: Reading firewall info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (module_count >= MAX_MODULE) {
+		fprintf(stderr, "ERR: Firewall has reach maximum amount of module.");
+		return EXIT_FAIL_OPTION;
+	}
+
+	if (cfg->index >= module_count) {
+		printf("WARN: Firewall has only %d modules. This rule would be appended to module instead.\n", module_count);
+		err = add_rule(cfg, 0);
+		return err;
+	}
+
+	if (cfg->index < 0 || cfg->index >= MAX_MODULE) {
+		fprintf(stderr, "ERR: Invalid rule index (index=%d).\n", cfg->index);
+		return EXIT_FAIL_OPTION;
+	}
+
+	int new_module_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
+										sizeof(struct module_info), MAX_MODULE_ENTRIES, 0);
+	if (new_module_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'modules_info' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	int new_index_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(char) * MAX_MODULE_NAME,
+										sizeof(__u32), MAX_MODULE_ENTRIES, 0);
+	if (new_module_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'modules_index' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	int new_prog_map_fd = bpf_create_map(BPF_MAP_TYPE_PROG_ARRAY, sizeof(__u32),
+										sizeof(__u32), MAX_MODULE_ENTRIES, 0);
+	if (new_prog_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'firewall_modules' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	err = insert_classifier_vectors(cfg);
+	if (err)
+		return err;
+
+	int i;
+	for (i=module_count-1; i>=0; i--) {
+		int new_index = i;
+		if (i >= module_index) new_index++;
+		if (bpf_map_lookup_elem(module_map_fd, &i, &minfo)) {
+			fprintf(stderr, "ERR: Reading old 'modules_info' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_update_elem(new_module_map_fd, &new_index, &minfo, 0)) {
+			fprintf(stderr, "ERR: Updating new 'modules_info' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_update_elem(new_index_map_fd, &minfo.module_name, &new_index, 0)) {
+			fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		struct config loader_cfg = {
+			.cmd		= ADD_MODULE,
+			.new_index 	= new_index,
+			.reuse_maps = 1,
+		};
+
+		strncpy(loader_cfg.module_new_name, minfo.module_name, MAX_MODULE_NAME);
+		err = module_loader(&loader_cfg, new_prog_map_fd);
+		if (err) {
+			fprintf(stderr, "ERR: Reloading module '%s'.\n", minfo.module_name);
+			return err;
+		}
+
+		if (i == cfg->index) {
+
+			struct module_info new_minfo = {
+				.key	= cfg->rule_key,
+				.operating	= 1,
+				.rule_count	= 0,
+			};
+
+			strncpy(new_minfo.module_name, cfg->module_new_name, MAX_MODULE_NAME);
+
+			if (bpf_map_update_elem(new_module_map_fd, &i, &new_minfo, 0)) {
+				fprintf(stderr, "ERR: Updating new 'modules_info' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+			if (bpf_map_update_elem(new_index_map_fd, &new_minfo.module_name, &i, 0)) {
+				fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+			struct config loader_cfg = {
+				.cmd		= ADD_MODULE,
+				.new_index 	= i,
+				.reuse_maps = 0,
+			};
+
+			strncpy(loader_cfg.module_new_name, new_minfo.module_name, MAX_MODULE_NAME);
+			err = module_loader(&loader_cfg, new_prog_map_fd);
+			if (err) {
+				fprintf(stderr, "ERR: Loading module '%s'.\n", minfo.module_name);
+				return err;
+			}
+
+		}
+	}
+
+	i = MAIN_MODULE;
+	if (bpf_map_lookup_elem(module_map_fd, &i, &minfo)) {
+		fprintf(stderr, "ERR: Reading old 'modules_info' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_update_elem(new_module_map_fd, &i, &minfo, 0)) {
+		fprintf(stderr, "ERR: Updating new 'modules_info' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_update_elem(new_index_map_fd, &minfo.module_name, &i, 0)) {
+		fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	struct config loader_cfg = {
+		.cmd		= ADD_MODULE,
+		.new_index 	= i,
+		.reuse_maps = 1,
+	};
+
+	strncpy(loader_cfg.module_new_name, minfo.module_name, MAX_MODULE_NAME);
+	err = module_loader(&loader_cfg, new_prog_map_fd);
+	if (err) {
+		fprintf(stderr, "ERR: Reloading module '%s'.\n", minfo.module_name);
+		return err;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'modules_info' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_module_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'modules_info' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'modules_index' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_index_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'modules_index' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	struct config policy_cfg = {
+		.rule_key	= {
+			.AF			= 0,
+			.src_ipv4	= 0x00000000,
+			.dst_ipv4	= 0x00000000,
+			.src_ipv6	= IN6ADDR_ANY_INIT,
+			.dst_ipv6	= IN6ADDR_ANY_INIT,
+			.src_ipv4_lpm = { },
+			.dst_ipv4_lpm = { },
+			.src_ipv6_lpm = { },
+			.dst_ipv6_lpm = { },
+			.proto		= 255,
+			.sport		= 0,
+			.dport		= 0,
+			.ifindex	= 0,
+		},
+		.rule_action = cfg->rule_action,
+	};
+
+	strncpy(policy_cfg.module_name, cfg->module_new_name, MAX_MODULE_NAME);
+
+	err = add_rule(&policy_cfg, 1);
+	if (err) {
+		fprintf(stderr, "ERR: Initialize %s policy.\n", policy_cfg.module_name);
+		return err;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/firewall_modules", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: Creating firewall modules map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'firewall_modules' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_prog_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'firewall_modules' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}	
+
+	module_count = module_count + 1;
+	if(bpf_map_update_elem(fw_map_fd, &index, &module_count, 0)) {
+		fprintf(stderr, "ERR: Updating firewall info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	err = fw_loader(1);
+	if (err) {
+		fprintf(stderr, "ERR: Reloading classifier.\n");
+		return err;
+	}
+	return EXIT_OK;
+
+}
 
 #endif
