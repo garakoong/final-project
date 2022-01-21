@@ -100,7 +100,7 @@ struct bpf_map_def SEC("maps") udp_dport_vector = {
 };
 
 struct bpf_map_def SEC("maps") dev_vector = {
-	.type           = BPF_MAP_TYPE_ARRAY,
+	.type           = BPF_MAP_TYPE_HASH,
 	.key_size       = sizeof(__u32),
 	.value_size     = sizeof(struct rule_vector),
 	.max_entries    = MAX_RULE_ENTRIES,

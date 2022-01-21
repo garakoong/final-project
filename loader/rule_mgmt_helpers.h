@@ -1389,7 +1389,7 @@ int delete_dev_vector(struct config *cfg) {
 	__u32 key, prev_key;
 	struct rule_vector vector;
 
-	new_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
 								sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
 	if (new_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'dev_vector' map.\n");
@@ -2233,7 +2233,7 @@ int insert_dev_vector(struct config *cfg) {
 	__u32 key, prev_key;
 	struct rule_vector vector;
 
-	new_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
 								sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
 	if (new_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'dev_vector' map.\n");

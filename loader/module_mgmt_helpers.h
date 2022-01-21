@@ -630,7 +630,10 @@ int set_classifier_dev_vector(struct config *cfg, int value) {
 	
 	int target_word = cfg->new_index / 64;
 	int target_bit = 63 - (cfg->new_index % 64);
-	vector.word[target_word] |= (__u64)1 << target_bit;
+	if (value)
+		vector.word[target_word] |= (__u64)1 << target_bit;
+	else
+		vector.word[target_word] &= ~((__u64)1 << target_bit);
 	if (bpf_map_update_elem(map_fd, &cfg->rule_key.ifindex, &vector, 0)) {
 		fprintf(stderr, "ERR: Updating dev_vector map.\n");
 		return EXIT_FAIL_BPF;
@@ -1420,7 +1423,7 @@ int delete_classifier_dev_vector(struct config *cfg) {
 	__u32 key, prev_key;
 	struct class_vector vector;
 
-	new_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u32),
 								sizeof(struct class_vector), MAX_MODULE_ENTRIES, 0);
 	if (new_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'dev_vector' map.\n");
@@ -1441,7 +1444,9 @@ int delete_classifier_dev_vector(struct config *cfg) {
 
 	while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			printf("%d %016llx ", key, vector.word[0]);
 			shift_left_class_vector(cfg->index, &vector);
+			printf("%016llx\n", vector.word[0]);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
