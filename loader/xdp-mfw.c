@@ -156,6 +156,12 @@ int main(int argc, char **argv)
 				fprintf(stderr, "ERR: unloading firewall.\n");
 			}
 			break;
+		case SHOW_FW_STATS:
+			list_modules();
+			break;
+		case SHOW_MODULE_STATS:
+			list_rules(&cfg);
+			break;
 		case ADD_MODULE:
 			if (cfg.rule_action == XDP_ABORTED) {
 				printf("WARN: Module's policy is not set. Default is ACCEPT\n");

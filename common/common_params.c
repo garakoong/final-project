@@ -224,7 +224,17 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
-			cfg->cmd = SHOW_FW_STATS;
+			cfg->cmd = SHOW_MODULE_STATS;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			if (strcmp(optarg, "-") == 0) {
+				cfg->cmd = SHOW_FW_STATS;
+			} else {
+				dest  = (char *)&cfg->module_name;
+				strncpy(dest, optarg, MAX_MODULE_NAME);
+			}
 			/* check module name, if not '-' cfg->cmd = SHOW_MODULE_STATS */
 			break;
 		case 'F':
@@ -442,7 +452,7 @@ void parse_cmdline_args(int argc, char **argv,
 
 				if (isLPM) {
 					cfg->rule_key.dst_ipv4_lpm.word[0] = prefixlen;
-					if (inet_pton(AF_INET, ipa, &cfg->rule_key.src_ipv6_lpm.word[1]) != 1) {
+					if (inet_pton(AF_INET, ipa, &cfg->rule_key.dst_ipv4_lpm.word[1]) != 1) {
 						fprintf(stderr, "ERR: Invalid ip address (%s).\n", ipa);
 						goto error;
 					}

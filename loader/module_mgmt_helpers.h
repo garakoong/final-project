@@ -23,6 +23,7 @@
 #include "../common/classifier_structs.h"
 #include "loader_helpers.h"
 #include "rule_mgmt_helpers.h"
+#include "common_mgmt_helpers.h"
 
 #ifndef PATH_MAX
 #define PATH_MAX	4096
@@ -2974,6 +2975,105 @@ int insert_module(struct config *cfg)
 	}
 	return EXIT_OK;
 
+}
+
+int list_modules() {
+	int len;
+	int fw_map_fd;
+	int index = 0;
+	int module_index = 0;
+	int module_count;
+	int module_map_fd;
+	int dev_map_fd;
+	char map_path[PATH_MAX];
+	struct module_info minfo;
+	__u32 key, prev_key, val;
+
+	// modules_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/firewall_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating firewall_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	fw_map_fd = bpf_obj_get(map_path);
+	if (fw_map_fd < 0) {
+		fprintf(stderr, "ERR: creating firewall_info map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(fw_map_fd, &index, &module_count)) {
+		fprintf(stderr, "ERR: Reading firewall info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/operating_dev", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating operating_dev map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	dev_map_fd = bpf_obj_get(map_path);
+	if (fw_map_fd < 0) {
+		fprintf(stderr, "ERR: creating operating_dev map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	printf("XDP Modular Firewall\n");
+	printf("======================================================================================================\n");
+	printf("Loaded Modules: %5d | Operating on: ", module_count);
+
+	if (bpf_map_get_next_key(dev_map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(dev_map_fd, &key, &val) >= 0) {
+			char ifname[IF_NAMESIZE];
+			if (if_indextoname(key, ifname) != NULL) {
+				printf("%s", ifname);
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(dev_map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(dev_map_fd, &key, &val) >= 0) {
+				char ifname[IF_NAMESIZE];
+				if (if_indextoname(key, ifname) != NULL) {
+					printf(", %s", ifname);
+				}
+			}
+			prev_key = key;
+		}
+
+	} else printf("-");
+	printf("\n------------------------------------------------------------------------------------------------------\n");
+	printf("MODULE NAME\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t\tRX PKTS\t\tRX BYTES\n");
+
+	for (module_index=0; module_index<module_count; module_index++) {
+		if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo) >= 0) {
+			printf("%-11s\t", minfo.module_name);
+			print_rulekey(&minfo.key);
+			printf("\n");
+		}
+	}
+
+	module_index = MAIN_MODULE;
+	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo) >= 0) {
+		printf("%-11s\t", minfo.module_name);
+		print_rulekey(&minfo.key);
+	}
+	printf("\n");
+
+	return EXIT_OK;
 }
 
 #endif

@@ -22,6 +22,7 @@
 #include "../common/common_libbpf.h"
 #include "../common/module_structs.h"
 #include "loader_helpers.h"
+#include "common_mgmt_helpers.h"
 
 #ifndef PATH_MAX
 #define PATH_MAX	4096
@@ -2614,7 +2615,7 @@ int insert_rule(struct config *cfg)
 
 	module_map_fd = bpf_obj_get(map_path);
 	if (module_map_fd < 0) {
-		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
 		return EXIT_FAIL_BPF;
 	}
 
@@ -2750,6 +2751,101 @@ int insert_rule(struct config *cfg)
 		fprintf(stderr, "ERR: Updating Module info.\n");
 		return EXIT_FAIL_BPF;
 	}
+
+	return EXIT_OK;
+}
+
+int list_rules(struct config *cfg) {
+	int len;
+	int index = 0;
+	int module_index = 0;
+	int module_map_fd;
+	int rule_map_fd;
+	int index_map_fd;
+	char map_path[PATH_MAX];
+	struct module_info minfo;
+	struct rule_info rinfo;
+
+	// get module index
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	index_map_fd = bpf_obj_get(map_path);
+	if (index_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(index_map_fd, &cfg->module_name, &module_index)) {
+		fprintf(stderr, "ERR: Reading module index.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (module_index < 0) {
+		fprintf(stderr, "ERR: Module '%s' not found.\n", cfg->module_name);
+		return EXIT_FAIL_BPF;
+	}
+
+	// modules_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo)) {
+		fprintf(stderr, "ERR: Reading module info\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	rule_map_fd = bpf_obj_get(map_path);
+	if (rule_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	index = POLICY_RULE;
+	if (bpf_map_lookup_elem(rule_map_fd, &index, &rinfo)) {
+		fprintf(stderr, "ERR: Reading rule info\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	printf("XDP Modular Firewall | Module Name: %s\n", minfo.module_name);
+	printf("SOURCE\t\tDEST\t\tPROT\tDEV\n");
+	print_rulekey(&minfo.key);
+	printf("\n");
+	printf("======================================================================================================\n");
+	printf("Rule Count: %5d | POLICY: ", minfo.rule_count);
+	if (rinfo.action == XDP_PASS)
+		printf("ACCEPT");
+	else if (rinfo.action == XDP_DROP)
+		printf("REJECT");
+
+	printf("\n------------------------------------------------------------------------------------------------------\n");
+	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t\tRX PKTS\t\tRX BYTES\n");
+
+	for (index=0; index<minfo.rule_count; index++) {
+		if (bpf_map_lookup_elem(rule_map_fd, &index, &rinfo) >= 0) {
+			printf("%5d\t", index);
+			print_rulekey(&rinfo.rule_key);
+			printf("\n");
+		}
+	}
+	printf("\n");
 
 	return EXIT_OK;
 }
