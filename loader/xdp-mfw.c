@@ -18,6 +18,8 @@ static const char *__doc__ = "XDP MODULAR FIREWALL\n"
 #include <net/if.h>
 #include <linux/if_link.h> /* depend on kernel-headers installed */
 #include <arpa/inet.h>
+#include <linux/icmp.h>
+#include <linux/icmpv6.h>
 
 #include "../common/common_params.h"
 #include "../common/common_user_bpf_xdp.h"
@@ -79,6 +81,9 @@ static const struct option_wrapper long_options[] = {
 	{{"new-index",    required_argument,	NULL,  4  },
 	 "Rule / Module new index", "<new-index>"},
 
+	{{"icmp-type",    required_argument,	NULL,  5  },
+	 "ICMP packet type.", "<type>"},
+
 	{{0, 0, NULL,  0 }, NULL, false}
 };
 
@@ -112,6 +117,7 @@ int main(int argc, char **argv)
 			.proto		= 255,
 			.sport		= 0,
 			.dport		= 0,
+			.icmp_type	= 255,
 			.ifindex	= 0,
 		},
 		.rule_action = XDP_ABORTED,
@@ -127,9 +133,18 @@ int main(int argc, char **argv)
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
 
-	if (cfg.rule_key.proto == 255 && (cfg.rule_key.sport != 0 || cfg.rule_key.dport != 0)) {
+	if ((cfg.rule_key.proto != IPPROTO_TCP && cfg.rule_key.proto != IPPROTO_UDP) &&
+		(cfg.rule_key.sport != 0 || cfg.rule_key.dport != 0)) {
 		fprintf(stderr, "ERR: Required -p option (tcp/udp protocol).\n");
 		return EXIT_FAIL_OPTION;
+	}
+	if ((cfg.rule_key.proto != IPPROTO_ICMP && cfg.rule_key.proto != IPPROTO_ICMPV6) &&
+		cfg.rule_key.icmp_type != 255) {
+		fprintf(stderr, "ERR: Required -p option (icmp/icmpv6 protocol).\n");
+		return EXIT_FAIL_OPTION;
+	} else if (cfg.rule_key.proto == IPPROTO_ICMPV6) {
+		if (cfg.rule_key.icmp_type == ICMP_ECHO) cfg.rule_key.icmp_type = ICMPV6_ECHO_REQUEST;
+		else if (cfg.rule_key.icmp_type == ICMP_ECHOREPLY) cfg.rule_key.icmp_type = ICMPV6_ECHO_REPLY;
 	}
 
 	switch(cfg.cmd) {
@@ -182,7 +197,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case INSERT_MODULE:
-			if (cfg.index == -1) {
+			if (cfg.index < 0) {
 				fprintf(stderr, "ERR: Module index is not set. (--index option is required.)\n");
 				return EXIT_FAIL_OPTION;
 			}
@@ -206,7 +221,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case DELETE_RULE:
-			if (cfg.index == -1) {
+			if (cfg.index < 0) {
 				fprintf(stderr, "ERR: Rule index is not set. (--index option is required.)\n");
 				return EXIT_FAIL_OPTION;
 			}
@@ -217,7 +232,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case INSERT_RULE:
-			if (cfg.index == -1) {
+			if (cfg.index < 0) {
 				fprintf(stderr, "ERR: Rule index is not set. (--index option is required.)\n");
 				return EXIT_FAIL_OPTION;
 			}

@@ -11,6 +11,8 @@
 #include <linux/if_xdp.h>
 #include <arpa/inet.h>
 #include <linux/in6.h>
+#include <linux/icmp.h>
+#include <linux/icmpv6.h>
 
 #include "common_params.h"
 #include "firewall_common.h"
@@ -306,7 +308,23 @@ void parse_cmdline_args(int argc, char **argv,
 				cfg->rule_key.proto = IPPROTO_TCP;
 			} else if (strcmp(optarg, "udp") == 0 || strcmp(optarg, "UDP") == 0 || atoi(optarg) == IPPROTO_UDP) {
 				cfg->rule_key.proto = IPPROTO_UDP;
-			} else {
+			} else if (strcmp(optarg, "icmp") == 0 || strcmp(optarg, "ICMP") == 0 || atoi(optarg) == IPPROTO_ICMP) {
+				if (cfg->rule_key.AF != 0 && cfg->rule_key.AF != AF_INET) {
+					fprintf(stderr, "ERR: Protocol mismatch with IP Address family.\n");
+					goto error;
+				}
+				cfg->rule_key.proto = IPPROTO_ICMP;
+				cfg->rule_key.AF = AF_INET;
+			} else if (strcmp(optarg, "icmpv6") == 0 || strcmp(optarg, "ICMPV6") == 0 ||
+					strcmp(optarg, "ICMPv6") == 0 || atoi(optarg) == IPPROTO_ICMPV6) {
+				if (cfg->rule_key.AF != 0 && cfg->rule_key.AF != AF_INET6) {
+					fprintf(stderr, "ERR: Protocol mismatch with IP Address family.\n");
+					goto error;
+				}
+				cfg->rule_key.proto = IPPROTO_ICMPV6;
+				cfg->rule_key.AF = AF_INET6;
+			}
+			else {
 				fprintf(stderr, "ERR: Protocol not supported.\n");
 				goto error;
 			}
@@ -326,10 +344,22 @@ void parse_cmdline_args(int argc, char **argv,
 			}
 			break;
 		case 3: /* --index */
-			cfg->index = atoi(optarg);
+			cfg->index = atoi(optarg) - 1;
 			break;
 		case 4: /* --new-index */
-			cfg->new_index = atoi(optarg);
+			cfg->new_index = atoi(optarg) - 1;
+			break;
+		case 5: /* --icmp-type */
+			if (strcmp(optarg, "echo-request") == 0 || strcmp(optarg, "ECHO") == 0 ||
+					atoi(optarg) == ICMP_ECHO || atoi(optarg) == ICMPV6_ECHO_REQUEST) {
+				cfg->rule_key.icmp_type = ICMP_ECHO;
+			} else if (strcmp(optarg, "echo-reply") == 0 || strcmp(optarg, "ECHOREPLY") == 0 ||
+					atoi(optarg) == ICMP_ECHOREPLY || atoi(optarg) == ICMPV6_ECHO_REPLY) {
+				cfg->rule_key.icmp_type = ICMP_ECHOREPLY;
+			} else {
+				fprintf(stderr, "ERR: ICMP type (%s) not supported.\n", optarg);
+				goto error;
+			}
 			break;
 		case 'f':
 			prefixlen = -1;

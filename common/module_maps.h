@@ -99,6 +99,20 @@ struct bpf_map_def SEC("maps") udp_dport_vector = {
 	.max_entries    = MAX_RULE_ENTRIES,
 };
 
+struct bpf_map_def SEC("maps") icmp_type_vector = {
+	.type           = BPF_MAP_TYPE_HASH,
+	.key_size       = sizeof(__u8),
+	.value_size     = sizeof(struct rule_vector),
+	.max_entries    = 256,
+};
+
+struct bpf_map_def SEC("maps") icmpv6_type_vector = {
+	.type           = BPF_MAP_TYPE_HASH,
+	.key_size       = sizeof(__u8),
+	.value_size     = sizeof(struct rule_vector),
+	.max_entries    = 256,
+};
+
 struct bpf_map_def SEC("maps") dev_vector = {
 	.type           = BPF_MAP_TYPE_HASH,
 	.key_size       = sizeof(__u32),

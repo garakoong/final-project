@@ -461,7 +461,7 @@ int set_sport_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
-	struct rule_vector vector;;
+	struct rule_vector vector;
 
 	switch (cfg->rule_key.proto) {
 		case 255:
@@ -535,7 +535,7 @@ int set_dport_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
 	char map_path[PATH_MAX];
-	struct rule_vector vector;;
+	struct rule_vector vector;
 
 	switch (cfg->rule_key.proto) {
 		case 255:
@@ -605,6 +605,80 @@ int set_dport_vector(struct config *cfg, int value) {
 	return EXIT_OK;
 }
 
+int set_icmp_type_vector(struct config *cfg, int value) {
+	int len;
+	int map_fd;
+	char map_path[PATH_MAX];
+	struct rule_vector vector;
+
+	switch (cfg->rule_key.proto) {
+		case 255:
+		case IPPROTO_ICMP: {
+			len = snprintf(map_path, PATH_MAX, "%s/%s/icmp_type_vector", pin_basedir, cfg->module_name);
+			if (len < 0) {
+				fprintf(stderr, "ERR: creating icmp_type_vector map path.\n");
+				return EXIT_FAIL_OPTION;
+			}
+			map_fd = bpf_obj_get(map_path);
+			if (map_fd < 0) {
+				fprintf(stderr, "ERR: Opening icmp_type_vector map.\n");
+				return EXIT_FAIL_BPF;
+			}
+
+			if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.icmp_type, &vector) == -1) {
+				memset(&vector, 0, sizeof(vector));
+			}
+
+			int target_word = cfg->new_index / 64;
+			int target_bit = 63 - (cfg->new_index % 64);
+			if (value)
+				vector.word[target_word] |= (__u64)1 << target_bit;
+			else
+				vector.word[target_word] &= ~((__u64)1 << target_bit);
+
+			if (bpf_map_update_elem(map_fd, &cfg->rule_key.icmp_type, &vector, 0)) {
+				fprintf(stderr, "ERR: Updating icmp_type_vector map.\n");
+				return EXIT_FAIL_BPF;
+			}
+			if (cfg->rule_key.proto == IPPROTO_ICMP)
+				break;
+		}
+		case IPPROTO_ICMPV6: {
+			len = snprintf(map_path, PATH_MAX, "%s/%s/icmpv6_type_vector", pin_basedir, cfg->module_name);
+			if (len < 0) {
+				fprintf(stderr, "ERR: creating icmpv6_type_vector map path.\n");
+				return EXIT_FAIL_OPTION;
+			}
+			map_fd = bpf_obj_get(map_path);
+			if (map_fd < 0) {
+				fprintf(stderr, "ERR: Opening icmpv6_type_vector map.\n");
+				return EXIT_FAIL_BPF;
+			}
+
+			if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.icmp_type, &vector) == -1) {
+				memset(&vector, 0, sizeof(vector));
+			}
+
+			int target_word = cfg->new_index / 64;
+			int target_bit = 63 - (cfg->new_index % 64);
+			if (value)
+				vector.word[target_word] |= (__u64)1 << target_bit;
+			else
+				vector.word[target_word] &= ~((__u64)1 << target_bit);
+
+			if (bpf_map_update_elem(map_fd, &cfg->rule_key.icmp_type, &vector, 0)) {
+				fprintf(stderr, "ERR: Updating icmpv6_type_vector map.\n");
+				return EXIT_FAIL_BPF;
+			}
+			break;
+		}
+		default:
+			fprintf(stderr, "ERR: Protocol not supported.\n");
+			return EXIT_FAIL_OPTION;
+	}
+	return EXIT_OK;
+}
+
 int set_dev_vector(struct config *cfg, int value) {
 	int len;
 	int map_fd;
@@ -654,16 +728,27 @@ int set_vectors(struct config *cfg, int value) {
 		return err;
 	}
 
-	err = set_sport_vector(cfg, value);
-	if (err) {
-		fprintf(stderr, "ERR: Updating module %s source port vector.\n", cfg->module_name);
-		return err;
+
+	if (cfg->rule_key.proto == IPPROTO_TCP || cfg->rule_key.proto == IPPROTO_UDP || cfg->rule_key.proto == 255) {
+		err = set_sport_vector(cfg, value);
+		if (err) {
+			fprintf(stderr, "ERR: Updating module %s source port vector.\n", cfg->module_name);
+			return err;
+		}
+
+		err = set_dport_vector(cfg, value);
+		if (err) {
+			fprintf(stderr, "ERR: Updating module %s dest port vector.\n", cfg->module_name);
+			return err;
+		}
 	}
 
-	err = set_dport_vector(cfg, value);
-	if (err) {
-		fprintf(stderr, "ERR: Updating module %s dest port vector.\n", cfg->module_name);
-		return err;
+	if (cfg->rule_key.proto == IPPROTO_ICMP || cfg->rule_key.proto == IPPROTO_ICMPV6 || cfg->rule_key.proto == 255) {
+		err = set_icmp_type_vector(cfg, value);
+		if (err) {
+			fprintf(stderr, "ERR: Updating module %s icmp type vector.\n", cfg->module_name);
+			return err;
+		}
 	}
 
 	err = set_dev_vector(cfg, value);
@@ -1511,6 +1596,128 @@ int delete_dport_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
+int delete_icmp_type_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u8 key, prev_key;
+	struct rule_vector vector;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u8),
+								sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'icmp_type_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/icmp_type_vector", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating icmp_type_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening icmp_type_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_left_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'icmp_type_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'icmp_type_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u8),
+								sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'icmpv6_type_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/icmpv6_type_vector", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating icmpv6_type_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening icmpv6_type_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd,NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_left_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_left_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'icmpv6_type_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'icmpv6_type_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
 int delete_dev_vector(struct config *cfg) {
 	int err, len;
 	int map_fd, new_map_fd;
@@ -1603,6 +1810,12 @@ int delete_vectors(struct config *cfg) {
 		return err;
 	}
 
+	err = delete_icmp_type_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating module %s icmp type vector.\n", cfg->module_name);
+		return err;
+	}
+
 	err = delete_dev_vector(cfg);
 	if (err) {
 		fprintf(stderr, "ERR: Updating module %s device vector.\n", cfg->module_name);
@@ -1672,7 +1885,7 @@ int delete_rule(struct config *cfg)
 	}
 
 	if (minfo.rule_count <= cfg->index || cfg->index < 0 || cfg->index >= MAX_RULE) {
-		fprintf(stderr, "ERR: rule index %d not available. (index 0 - %d are available)\n", cfg->index, minfo.rule_count-1);
+		fprintf(stderr, "ERR: rule index %d not available. (index 1 - %d are available)\n", cfg->index+1, minfo.rule_count);
 		return EXIT_FAIL_OPTION;
 	}
 
@@ -2486,6 +2699,129 @@ int insert_dport_vector(struct config *cfg) {
 	return EXIT_OK;
 }
 
+int insert_icmp_type_vector(struct config *cfg) {
+	int err, len;
+	int map_fd, new_map_fd;
+	char map_path[PATH_MAX];
+	__u8 key, prev_key;
+	struct rule_vector vector;
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u8),
+								sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'icmp_type_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/icmp_type_vector", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating icmp_type_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening icmp_type_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'icmp_type_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'icmp_type_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	new_map_fd = bpf_create_map(BPF_MAP_TYPE_HASH, sizeof(__u8),
+								sizeof(struct rule_vector), MAX_RULE_ENTRIES, 0);
+	if (new_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'icmpv6_type_vector' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/icmpv6_type_vector", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating icmpv6_type_vector map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	map_fd = bpf_obj_get(map_path);
+	if (map_fd < 0) {
+		fprintf(stderr, "ERR: Opening icmpv6_type_vector map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
+		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+			shift_right_vector(cfg->index, &vector);
+			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+			if (err) {
+				fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
+				return EXIT_FAIL_BPF;
+			}
+		}
+		prev_key = key;
+
+		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
+			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
+				shift_right_vector(cfg->index, &vector);
+				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
+				if (err) {
+					fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
+					return EXIT_FAIL_BPF;
+				}
+			}
+			prev_key = key;
+		}
+	}
+
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'icmpv6_type_vector' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'icmpv6_type_vector' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	close(map_fd);
+	close(new_map_fd);
+
+	return EXIT_OK;
+}
+
 int insert_dev_vector(struct config *cfg) {
 	int err, len;
 	int map_fd, new_map_fd;
@@ -2576,6 +2912,12 @@ int insert_vectors(struct config *cfg) {
 	err = insert_dport_vector(cfg);
 	if (err) {
 		fprintf(stderr, "ERR: Updating module %s dest port vector.\n", cfg->module_name);
+		return err;
+	}
+
+	err = insert_icmp_type_vector(cfg);
+	if (err) {
+		fprintf(stderr, "ERR: Updating module %s icmp type vector.\n", cfg->module_name);
 		return err;
 	}
 
@@ -2836,12 +3178,16 @@ int list_rules(struct config *cfg) {
 		printf("REJECT");
 
 	printf("\n------------------------------------------------------------------------------------------------------\n");
-	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t\tRX PKTS\t\tRX BYTES\n");
+	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t\tACTION\t\tRX PKTS\t\tRX BYTES\n");
 
 	for (index=0; index<minfo.rule_count; index++) {
 		if (bpf_map_lookup_elem(rule_map_fd, &index, &rinfo) >= 0) {
-			printf("%5d\t", index);
+			printf("%5d\t", index+1);
 			print_rulekey(&rinfo.rule_key);
+			if (rinfo.action == XDP_PASS)
+				printf("ACCEPT\t");
+			else if (rinfo.action == XDP_DROP)
+				printf("REJECT\t");
 			printf("\n");
 		}
 	}

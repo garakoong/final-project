@@ -207,6 +207,54 @@ void dst_port_lookup(struct tcphdr *tcph, struct udphdr *udph, struct class_vect
 }
 
 static __always_inline
+void icmp_type_lookup(int icmp_type, int eth_type, struct class_vector *vector) {
+
+    struct class_vector *wildcard_res = NULL;
+    struct class_vector *lookup_res;
+    __u8 key = 255;
+    int w;
+
+    if (icmp_type < 0 || icmp_type >255)
+        return;
+
+    if (eth_type == bpf_htons(ETH_P_IP)) {
+        wildcard_res = bpf_map_lookup_elem(&icmp_type_vector, &key);
+
+        key = icmp_type;
+        lookup_res = bpf_map_lookup_elem(&icmp_type_vector, &key);
+
+        if (wildcard_res) {
+            #pragma clang loop unroll(full)
+            for(w=0; w<MAX_CLASS_WORD; w++) {
+                __u64 word = wildcard_res->word[w];
+                if (lookup_res) {
+                    word |= lookup_res->word[w];
+                }
+                vector->word[w] &= word;
+            }
+        }
+    } else if (eth_type == bpf_htons(ETH_P_IPV6)) {
+        wildcard_res = bpf_map_lookup_elem(&icmpv6_type_vector, &key);
+
+        key = icmp_type;
+        lookup_res = bpf_map_lookup_elem(&icmpv6_type_vector, &key);
+
+        if (wildcard_res) {
+            #pragma clang loop unroll(full)
+            for(w=0; w<MAX_CLASS_WORD; w++) {
+                __u64 word = wildcard_res->word[w];
+                if (lookup_res) {
+                    word |= lookup_res->word[w];
+                }
+                vector->word[w] &= word;
+            }
+        }
+    }
+
+    return;
+}
+
+static __always_inline
 void device_lookup(struct xdp_md *ctx, struct class_vector *vector) {
 
     struct class_vector *wildcard_res = NULL;

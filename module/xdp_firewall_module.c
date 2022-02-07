@@ -38,7 +38,7 @@ int fw_module(struct xdp_md *ctx)
 	void *data = (void *)(long)ctx->data;
 	struct hdr_cursor nh = { .pos = data };
 
-    int eth_type, ip_type;
+    int eth_type, ip_type, icmp_type;
     int action = XDP_PASS;
 	__u32 rule_num = POLICY_RULE;
 	struct ethhdr *eth;
@@ -46,7 +46,7 @@ int fw_module(struct xdp_md *ctx)
 	struct ipv6hdr *ipv6hdr = NULL;
 	struct udphdr *udphdr = NULL;
 	struct tcphdr *tcphdr = NULL;
-
+	struct icmphdr_common *icmphdr = NULL;
 	struct rule_vector lookup_res;
 	struct rule_info *info;
 
@@ -82,6 +82,12 @@ int fw_module(struct xdp_md *ctx)
 			action = XDP_ABORTED;
 			goto out;
 		}
+	} else if (ip_type == IPPROTO_ICMP || ip_type == IPPROTO_ICMPV6) {
+		icmp_type = parse_icmphdr_common(&nh, data_end, &icmphdr);
+		if (icmp_type < 0) {
+			action = XDP_ABORTED;
+			goto out;
+		}
 	} else goto out;
 
 
@@ -89,12 +95,21 @@ int fw_module(struct xdp_md *ctx)
 
     src_ip_lookup(iphdr, ipv6hdr, &lookup_res);
 	bpf_printk("saddr (%lx)\n", lookup_res.word[0]);
+
 	dst_ip_lookup(iphdr, ipv6hdr, &lookup_res);
 	bpf_printk("daddr (%lx)\n", lookup_res.word[0]);
-	src_port_lookup(tcphdr, udphdr, &lookup_res);
-	bpf_printk("sport (%lx)\n", lookup_res.word[0]);
-	dst_port_lookup(tcphdr, udphdr, &lookup_res);
-	bpf_printk("dport (%lx)\n", lookup_res.word[0]);
+
+	if (ip_type == IPPROTO_TCP || ip_type == IPPROTO_UDP) {
+		src_port_lookup(tcphdr, udphdr, &lookup_res);
+		bpf_printk("sport (%lx)\n", lookup_res.word[0]);
+
+		dst_port_lookup(tcphdr, udphdr, &lookup_res);
+		bpf_printk("dport (%lx)\n", lookup_res.word[0]);
+	} else if (ip_type == IPPROTO_ICMP || ip_type == IPPROTO_ICMPV6) {
+		icmp_type_lookup(icmp_type, eth_type, &lookup_res);
+		bpf_printk("icmp (%lx)\n", lookup_res.word[0]);
+	}
+
 	device_lookup(ctx, &lookup_res);
 	bpf_printk("dev (%lx)\n", lookup_res.word[0]);
 

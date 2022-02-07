@@ -102,6 +102,10 @@ void print_rulekey(struct rule_key *rule_key) {
 		printf("tcp\t");
 	} else if (rule_key->proto == IPPROTO_UDP) {
 		printf("udp\t");
+	} else if (rule_key->proto == IPPROTO_ICMP) {
+		printf("icmp\t");
+	} else if (rule_key->proto == IPPROTO_ICMPV6) {
+		printf("icmpv6\t");
 	} else printf("*\t");
 
 	//dev
@@ -113,22 +117,41 @@ void print_rulekey(struct rule_key *rule_key) {
 	} else printf("*\t");
 
 	int count_etc = 0;
-	//sport
-	if (rule_key->sport != 0) {
-		if (count_etc > 0)
-			printf(", ");
-		__u16 sport = swapportendian(rule_key->sport);
-		printf("spt: %hu", sport);
-		count_etc++;
+
+	if (rule_key->proto == IPPROTO_TCP || rule_key->proto == IPPROTO_UDP) {
+		//sport
+		if (rule_key->sport != 0) {
+			if (count_etc > 0)
+				printf(", ");
+			__u16 sport = swapportendian(rule_key->sport);
+			printf("spt: %hu", sport);
+			count_etc++;
+		}
+		//dport
+		if (rule_key->dport != 0) {
+			if (count_etc > 0)
+				printf(", ");
+			__u16 dport = swapportendian(rule_key->dport);
+			printf("dpt: %hu", dport);
+			count_etc++;
+		}
 	}
-	//dport
-	if (rule_key->dport != 0) {
-		if (count_etc > 0)
-			printf(", ");
-		__u16 dport = swapportendian(rule_key->dport);
-		printf("dpt: %hu", dport);
-		count_etc++;
+
+	if (rule_key->proto == IPPROTO_ICMP || rule_key->proto == IPPROTO_ICMPV6) {
+		//icmp type
+		if (rule_key->icmp_type == ICMP_ECHO || rule_key->icmp_type == ICMPV6_ECHO_REQUEST) {
+			if (count_etc > 0)
+				printf(", ");
+			printf("echo-request");
+			count_etc++;
+		} else if (rule_key->icmp_type == ICMP_ECHOREPLY || rule_key->icmp_type == ICMPV6_ECHO_REPLY) {
+			if (count_etc > 0)
+				printf(", ");
+			printf("echo-reply");
+			count_etc++;
+		}
 	}
+
 	if (count_etc == 0)
 		printf("\t");
 	printf("\t\t");

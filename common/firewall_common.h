@@ -54,6 +54,7 @@ struct rule_key {
     __u8 proto;
     __u16 sport;
     __u16 dport;
+    __u8 icmp_type;
     __u32 ifindex;
 };
 
