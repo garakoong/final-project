@@ -127,6 +127,17 @@ int fw_classifier(struct xdp_md *ctx)
 
 call_module:
 	bpf_printk("call_module: %d (%lx)\n", module_num, lookup_res.word[0]);
+
+	if (module_num >= 0 && module_num <= MAIN_MODULE) {
+	
+		struct stats_rec *rec = bpf_map_lookup_elem(&module_stats, &module_num);
+		if (rec) {
+			rec->match_packets++;
+			rec->match_bytes += (ctx->data_end - ctx->data);
+		}
+
+	}
+
 	bpf_tail_call(ctx, &firewall_modules, module_num);
 
 out:

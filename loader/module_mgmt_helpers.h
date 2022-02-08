@@ -3322,6 +3322,7 @@ int insert_module(struct config *cfg)
 int list_modules() {
 	int len;
 	int fw_map_fd;
+	int stats_map_fd;
 	int index = 0;
 	int module_index = 0;
 	int module_count;
@@ -3373,8 +3374,20 @@ int list_modules() {
 		return EXIT_FAIL_BPF;
 	}
 
-	printf("XDP Modular Firewall\n");
-	printf("======================================================================================================\n");
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/module_stats", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating module_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	stats_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening module_stats map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	printf("================================================================================================================\n");
+	printf("XDP Modular Firewall");
+	printf("\n----------------------------------------------------------------------------------------------------------------\n");
 	printf("Loaded Modules: %5d | Operating on: ", module_count);
 
 	if (bpf_map_get_next_key(dev_map_fd, NULL, &key) == 0) {
@@ -3397,13 +3410,15 @@ int list_modules() {
 		}
 
 	} else printf("-");
-	printf("\n------------------------------------------------------------------------------------------------------\n");
-	printf("MODULE NAME\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t\tRX PKTS\t\tRX BYTES\n");
+	printf("\n================================================================================================================\n");
+	printf("MODULE NAME\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t%16s%16s", "MATCH PKTS", "MATCH BYTES");
+	printf("\n----------------------------------------------------------------------------------------------------------------\n");
 
 	for (module_index=0; module_index<module_count; module_index++) {
 		if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo) >= 0) {
 			printf("%-11s\t", minfo.module_name);
 			print_rulekey(&minfo.key);
+			print_stats(stats_map_fd, module_index);
 			printf("\n");
 		}
 	}
@@ -3412,6 +3427,7 @@ int list_modules() {
 	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo) >= 0) {
 		printf("%-11s\t", minfo.module_name);
 		print_rulekey(&minfo.key);
+		print_stats(stats_map_fd, module_index);
 	}
 	printf("\n");
 

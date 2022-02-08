@@ -3104,6 +3104,7 @@ int list_rules(struct config *cfg) {
 	int module_map_fd;
 	int rule_map_fd;
 	int index_map_fd;
+	int stats_map_fd;
 	char map_path[PATH_MAX];
 	struct module_info minfo;
 	struct rule_info rinfo;
@@ -3160,34 +3161,45 @@ int list_rules(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rule_stats", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rule_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	stats_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rule_stats map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	index = POLICY_RULE;
 	if (bpf_map_lookup_elem(rule_map_fd, &index, &rinfo)) {
 		fprintf(stderr, "ERR: Reading rule info\n");
 		return EXIT_FAIL_BPF;
 	}
 
-	printf("XDP Modular Firewall | Module Name: %s\n", minfo.module_name);
-	printf("SOURCE\t\tDEST\t\tPROT\tDEV\n");
-	print_rulekey(&minfo.key);
-	printf("\n");
-	printf("======================================================================================================\n");
+	printf("================================================================================================================\n");
+	printf("XDP Modular Firewall | Module Name: %s", minfo.module_name);
+	printf("\n----------------------------------------------------------------------------------------------------------------\n");
 	printf("Rule Count: %5d | POLICY: ", minfo.rule_count);
 	if (rinfo.action == XDP_PASS)
 		printf("ACCEPT");
 	else if (rinfo.action == XDP_DROP)
 		printf("REJECT");
 
-	printf("\n------------------------------------------------------------------------------------------------------\n");
-	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t\tACTION\t\tRX PKTS\t\tRX BYTES\n");
+	printf("\n================================================================================================================\n");
+	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\tACTION%16s%16s", "MATCH PKTS", "MATCH BYTES");
+	printf("\n----------------------------------------------------------------------------------------------------------------\n");
 
 	for (index=0; index<minfo.rule_count; index++) {
 		if (bpf_map_lookup_elem(rule_map_fd, &index, &rinfo) >= 0) {
 			printf("%5d\t", index+1);
 			print_rulekey(&rinfo.rule_key);
 			if (rinfo.action == XDP_PASS)
-				printf("ACCEPT\t");
+				printf("ACCEPT");
 			else if (rinfo.action == XDP_DROP)
-				printf("REJECT\t");
+				printf("REJECT");
+			print_stats(stats_map_fd, index);
 			printf("\n");
 		}
 	}

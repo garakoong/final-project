@@ -152,9 +152,29 @@ void print_rulekey(struct rule_key *rule_key) {
 		}
 	}
 
-	if (count_etc == 0)
-		printf("\t");
 	printf("\t\t");
+}
+
+void print_stats(int map_fd, __u32 index)
+{
+	unsigned int nr_cpus = libbpf_num_possible_cpus();
+	struct stats_rec recs[nr_cpus];
+	__u64 sum_bytes = 0;
+	__u64 sum_pkts = 0;
+	int i;
+
+	if (bpf_map_lookup_elem(map_fd, &index, recs)) {
+		fprintf(stderr, "ERR: Reading stats record.\n");
+		return;
+	}
+
+	/* Sum values from each CPU */
+	for (i = 0; i < nr_cpus; i++) {
+		sum_pkts  += recs[i].match_packets;
+		sum_bytes += recs[i].match_bytes;
+	}
+	
+	printf("%16llu%16llu", sum_pkts, sum_bytes);
 }
 
 #endif
