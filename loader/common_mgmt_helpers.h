@@ -31,17 +31,20 @@ __u16 swapportendian(__u16 num) {
 }
 
 void print_rulekey(struct rule_key *rule_key) {
+
+	char source[50];
+	char dest[50];
 	//source
 	if (rule_key->AF == AF_INET) {
 		char ipv4_addr[16];
 		if (rule_key->src_ipv4 != 0) {
 			if (inet_ntop(AF_INET, &rule_key->src_ipv4, ipv4_addr, sizeof(ipv4_addr)) != NULL) {
-				printf("%s\t", ipv4_addr);
+				snprintf(source, 50, "%s", ipv4_addr);
 			}
 		} else {
 			__u32 prefix = rule_key->src_ipv4_lpm.word[0];
 			if (inet_ntop(AF_INET, &rule_key->src_ipv4_lpm.word[1], ipv4_addr, sizeof(ipv4_addr)) != NULL) {
-				printf("%s/%d\t", ipv4_addr, prefix);
+				snprintf(source, 50, "%s/%d", ipv4_addr, prefix);
 			}
 		}
 	} else if (rule_key->AF == AF_INET6) {
@@ -49,7 +52,7 @@ void print_rulekey(struct rule_key *rule_key) {
 		if (rule_key->src_ipv6.s6_addr32[0] != 0 || rule_key->src_ipv6.s6_addr32[1] != 0 ||
 			rule_key->src_ipv6.s6_addr32[2] != 0 || rule_key->src_ipv6.s6_addr32[3] != 0) {
 			if (inet_ntop(AF_INET6, &rule_key->src_ipv6, ipv6_addr, sizeof(ipv6_addr)) != NULL) {
-				printf("%s\t", ipv6_addr);
+				snprintf(source, 50, "%s", ipv6_addr);
 			}
 		} else {
 			struct in6_addr ipv6;
@@ -59,22 +62,23 @@ void print_rulekey(struct rule_key *rule_key) {
 			ipv6.s6_addr32[2] = rule_key->src_ipv6_lpm.word[3];
 			ipv6.s6_addr32[3] = rule_key->src_ipv6_lpm.word[4];
 			if (inet_ntop(AF_INET6, &ipv6, ipv6_addr, sizeof(ipv6_addr)) != NULL) {
-				printf("%s/%d\t", ipv6_addr, prefix);
+				snprintf(source, 50, "%s/%d", ipv6_addr, prefix);
 			}
 		}
-	} else printf("*\t\t");
+	} else snprintf(source, 50, "*");
+
 
 	//dest
 	if (rule_key->AF == AF_INET) {
 		char ipv4_addr[16];
 		if (rule_key->dst_ipv4 != 0) {
 			if (inet_ntop(AF_INET, &rule_key->dst_ipv4, ipv4_addr, sizeof(ipv4_addr)) != NULL) {
-				printf("%s\t", ipv4_addr);
+				snprintf(dest, 50, "%s", ipv4_addr);
 			}
 		} else {
 			__u32 prefix = rule_key->dst_ipv4_lpm.word[0];
 			if (inet_ntop(AF_INET, &rule_key->dst_ipv4_lpm.word[1], ipv4_addr, sizeof(ipv4_addr)) != NULL) {
-				printf("%s/%d\t", ipv4_addr, prefix);
+				snprintf(dest, 50, "%s/%d", ipv4_addr, prefix);
 			}
 		}
 	} else if (rule_key->AF == AF_INET6) {
@@ -82,7 +86,7 @@ void print_rulekey(struct rule_key *rule_key) {
 		if (rule_key->dst_ipv6.s6_addr32[0] != 0 || rule_key->dst_ipv6.s6_addr32[1] != 0 ||
 			rule_key->dst_ipv6.s6_addr32[2] != 0 || rule_key->dst_ipv6.s6_addr32[3] != 0) {
 			if (inet_ntop(AF_INET6, &rule_key->dst_ipv6, ipv6_addr, sizeof(ipv6_addr)) != NULL) {
-				printf("%s\t", ipv6_addr);
+				snprintf(dest, 50, "%s", ipv6_addr);
 			}
 		} else {
 			struct in6_addr ipv6;
@@ -92,10 +96,12 @@ void print_rulekey(struct rule_key *rule_key) {
 			ipv6.s6_addr32[2] = rule_key->dst_ipv6_lpm.word[3];
 			ipv6.s6_addr32[3] = rule_key->dst_ipv6_lpm.word[4];
 			if (inet_ntop(AF_INET6, &ipv6, ipv6_addr, sizeof(ipv6_addr)) != NULL) {
-				printf("%s/%d\t", ipv6_addr, prefix);
+				snprintf(dest, 50, "%s/%d", ipv6_addr, prefix);
 			}
 		}
-	} else printf("*\t\t");
+	} else snprintf(dest, 50, "*");
+
+	printf("%-10s\t%-10s\t", source, dest);
 
 	//prot
 	if (rule_key->proto == IPPROTO_TCP) {

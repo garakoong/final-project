@@ -1830,10 +1830,13 @@ int delete_rule(struct config *cfg)
 	int err, len;
 	int rule_map_fd;
 	int module_map_fd;
+	int stats_map_fd;
 	int module_index;
 	char map_path[PATH_MAX];
 	struct rule_info rinfo;
 	struct module_info minfo;
+	int nr_cpus = libbpf_num_possible_cpus();
+	struct stats_rec rec[nr_cpus];
 
 	// get module index
 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
@@ -1901,10 +1904,29 @@ int delete_rule(struct config *cfg)
 		return EXIT_FAIL_BPF;
 	}
 
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rule_stats", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rule_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	stats_map_fd = bpf_obj_get(map_path);
+	if (stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rule_stats map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	int new_rule_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
 										sizeof(struct rule_info), MAX_RULE_ENTRIES, 0);
 	if (new_rule_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'rules_info' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	int new_stats_map_fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, sizeof(__u32),
+										sizeof(struct stats_rec), MAX_RULE_ENTRIES, 0);
+	if (new_stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'rule_stats' map\n");
 		return EXIT_FAIL_BPF;
 	}
 
@@ -1925,6 +1947,14 @@ int delete_rule(struct config *cfg)
 			fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
 			return EXIT_FAIL_BPF;
 		}
+		if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+			fprintf(stderr, "ERR: Reading old 'rule_stats' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_update_elem(new_stats_map_fd, &new_index, &rec, 0)) {
+			fprintf(stderr, "ERR: Updating new 'rule_stats' map.\n");
+			return EXIT_FAIL_BPF;
+		}
 	}
 
 	i = POLICY_RULE;
@@ -1936,13 +1966,37 @@ int delete_rule(struct config *cfg)
 		fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
 		return EXIT_FAIL_BPF;
 	}
+	if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+		fprintf(stderr, "ERR: Reading old 'rule_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_update_elem(new_stats_map_fd, &i, &rec, 0)) {
+		fprintf(stderr, "ERR: Updating new 'rule_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
 
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
 	if (remove(map_path)) {
 		fprintf(stderr, "ERR: Removing previous 'rules_info' map\n");
 		return EXIT_FAIL_OPTION;
 	} else {
 		if (bpf_obj_pin(new_rule_map_fd, map_path)) {
 			fprintf(stderr, "ERR: Pinning new 'rules_info' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rule_stats", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rule_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'rule_stats' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_stats_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'rule_stats' map\n");
 			return EXIT_FAIL_BPF;
 		}
 	}
@@ -2939,6 +2993,7 @@ int insert_rule(struct config *cfg)
 	int err, len;
 	int rule_map_fd;
 	int module_map_fd;
+	int stats_map_fd;
 	int module_index;
 	char map_path[PATH_MAX];
 	struct rule_info rinfo = {
@@ -2947,6 +3002,8 @@ int insert_rule(struct config *cfg)
 	};
 	struct module_info minfo;
 	cfg->new_index = cfg->index;
+	int nr_cpus = libbpf_num_possible_cpus();
+	struct stats_rec rec[nr_cpus];
 
 	// get module index
 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
@@ -3020,10 +3077,29 @@ int insert_rule(struct config *cfg)
 		return EXIT_FAIL_BPF;
 	}
 
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rule_stats", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rule_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	stats_map_fd = bpf_obj_get(map_path);
+	if (stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rule_stats map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	int new_rule_map_fd = bpf_create_map(BPF_MAP_TYPE_ARRAY, sizeof(__u32),
 										sizeof(struct rule_info), MAX_RULE_ENTRIES, 0);
 	if (new_rule_map_fd < 0) {
 		fprintf(stderr, "ERR: Creating new 'rules_info' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	int new_stats_map_fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, sizeof(__u32),
+										sizeof(struct stats_rec), MAX_RULE_ENTRIES, 0);
+	if (new_stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'rule_stats' map\n");
 		return EXIT_FAIL_BPF;
 	}
 
@@ -3041,6 +3117,14 @@ int insert_rule(struct config *cfg)
 		}
 		if (bpf_map_update_elem(new_rule_map_fd, &new_index, &rinfo, 0)) {
 			fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+			fprintf(stderr, "ERR: Reading old 'rule_stats' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_update_elem(new_stats_map_fd, &new_index, &rec, 0)) {
+			fprintf(stderr, "ERR: Updating new 'rule_stats' map.\n");
 			return EXIT_FAIL_BPF;
 		}
 		if (i == cfg->index) {
@@ -3064,13 +3148,37 @@ int insert_rule(struct config *cfg)
 		fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
 		return EXIT_FAIL_BPF;
 	}
+	if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+		fprintf(stderr, "ERR: Reading old 'rule_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_update_elem(new_stats_map_fd, &i, &rec, 0)) {
+		fprintf(stderr, "ERR: Updating new 'rule_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
 
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
 	if (remove(map_path)) {
 		fprintf(stderr, "ERR: Removing previous 'rules_info' map\n");
 		return EXIT_FAIL_OPTION;
 	} else {
 		if (bpf_obj_pin(new_rule_map_fd, map_path)) {
 			fprintf(stderr, "ERR: Pinning new 'rules_info' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rule_stats", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rule_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'rule_stats' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_stats_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'rule_stats' map\n");
 			return EXIT_FAIL_BPF;
 		}
 	}
@@ -3178,18 +3286,23 @@ int list_rules(struct config *cfg) {
 		return EXIT_FAIL_BPF;
 	}
 
-	printf("================================================================================================================\n");
+	printf("================================================================================================================================\n");
 	printf("XDP Modular Firewall | Module Name: %s", minfo.module_name);
-	printf("\n----------------------------------------------------------------------------------------------------------------\n");
-	printf("Rule Count: %5d | POLICY: ", minfo.rule_count);
+	printf("\n--------------------------------------------------------------------------------------------------------------------------------\n");
+	printf("STATUS: ");
+	if (minfo.operating)
+		printf("%8s", "ACTIVE");
+	else
+		printf("%8s", "INACTIVE");
+	printf(" | Rule Count: %5d | POLICY: ", minfo.rule_count);
 	if (rinfo.action == XDP_PASS)
 		printf("ACCEPT");
 	else if (rinfo.action == XDP_DROP)
 		printf("REJECT");
 
-	printf("\n================================================================================================================\n");
+	printf("\n================================================================================================================================\n");
 	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\tACTION%16s%16s", "MATCH PKTS", "MATCH BYTES");
-	printf("\n----------------------------------------------------------------------------------------------------------------\n");
+	printf("\n--------------------------------------------------------------------------------------------------------------------------------\n");
 
 	for (index=0; index<minfo.rule_count; index++) {
 		if (bpf_map_lookup_elem(rule_map_fd, &index, &rinfo) >= 0) {

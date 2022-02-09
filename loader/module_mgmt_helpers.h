@@ -1861,9 +1861,12 @@ int delete_module(struct config *cfg)
 	int module_index;
 	int module_count;
 	int module_map_fd;
+	int stats_map_fd;
 	int index_map_fd;
 	char map_path[PATH_MAX];
 	struct module_info minfo;
+	int nr_cpus = libbpf_num_possible_cpus();
+	struct stats_rec rec[nr_cpus];
 
 	// get module index
 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
@@ -1921,6 +1924,18 @@ int delete_module(struct config *cfg)
 		return EXIT_FAIL_BPF;
 	}
 
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/module_stats", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating module_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	stats_map_fd = bpf_obj_get(map_path);
+	if (stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening module_stats map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	if (bpf_map_lookup_elem(fw_map_fd, &index, &module_count)) {
 		fprintf(stderr, "ERR: Reading firewall info.\n");
 		return EXIT_FAIL_BPF;
@@ -1947,6 +1962,13 @@ int delete_module(struct config *cfg)
 		return EXIT_FAIL_BPF;
 	}
 
+	int new_stats_map_fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, sizeof(__u32),
+										sizeof(struct stats_rec), MAX_MODULE_ENTRIES, 0);
+	if (new_stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'module_stats' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	err = delete_classifier_vectors(cfg);
 	if (err)
 		return err;
@@ -1966,6 +1988,14 @@ int delete_module(struct config *cfg)
 		}
 		if (bpf_map_update_elem(new_index_map_fd, &minfo.module_name, &new_index, 0)) {
 			fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+			fprintf(stderr, "ERR: Reading old 'module_stats' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_update_elem(new_stats_map_fd, &new_index, &rec, 0)) {
+			fprintf(stderr, "ERR: Updating new 'module_stats' map.\n");
 			return EXIT_FAIL_BPF;
 		}
 		struct config loader_cfg = {
@@ -1993,6 +2023,14 @@ int delete_module(struct config *cfg)
 	}
 	if (bpf_map_update_elem(new_index_map_fd, &minfo.module_name, &i, 0)) {
 		fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+		fprintf(stderr, "ERR: Reading old 'module_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_update_elem(new_stats_map_fd, &i, &rec, 0)) {
+		fprintf(stderr, "ERR: Updating new 'module_stats' map.\n");
 		return EXIT_FAIL_BPF;
 	}
 	struct config loader_cfg = {
@@ -2034,6 +2072,21 @@ int delete_module(struct config *cfg)
 	} else {
 		if (bpf_obj_pin(new_index_map_fd, map_path)) {
 			fprintf(stderr, "ERR: Pinning new 'modules_index' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/module_stats", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating module_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'module_stats' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_stats_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'module_stats' map\n");
 			return EXIT_FAIL_BPF;
 		}
 	}
@@ -3045,9 +3098,12 @@ int insert_module(struct config *cfg)
 	int module_index;
 	int module_count;
 	int module_map_fd;
+	int stats_map_fd;
 	int index_map_fd;
 	char map_path[PATH_MAX];
 	struct module_info minfo;
+	int nr_cpus = libbpf_num_possible_cpus();
+	struct stats_rec rec[nr_cpus];
 	cfg->new_index = cfg->index;
 
 	// get module index
@@ -3091,7 +3147,19 @@ int insert_module(struct config *cfg)
 
 	fw_map_fd = bpf_obj_get(map_path);
 	if (fw_map_fd < 0) {
-		fprintf(stderr, "ERR: creating firewall_info map path.\n");
+		fprintf(stderr, "ERR: Opening firewall_info map path.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/module_stats", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating module_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	stats_map_fd = bpf_obj_get(map_path);
+	if (stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening module_stats map path.\n");
 		return EXIT_FAIL_BPF;
 	}
 
@@ -3137,6 +3205,13 @@ int insert_module(struct config *cfg)
 		return EXIT_FAIL_BPF;
 	}
 
+	int new_stats_map_fd = bpf_create_map(BPF_MAP_TYPE_PERCPU_ARRAY, sizeof(__u32),
+										sizeof(struct stats_rec), MAX_MODULE_ENTRIES, 0);
+	if (new_stats_map_fd < 0) {
+		fprintf(stderr, "ERR: Creating new 'module_stats' map\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	err = insert_classifier_vectors(cfg);
 	if (err)
 		return err;
@@ -3144,6 +3219,11 @@ int insert_module(struct config *cfg)
 	int i;
 	for (i=module_count-1; i>=0; i--) {
 		int new_index = i;
+		struct config loader_cfg = {
+			.cmd		= ADD_MODULE,
+			.new_index 	= new_index,
+			.reuse_maps = 1,
+		};
 		if (i >= module_index) new_index++;
 		if (bpf_map_lookup_elem(module_map_fd, &i, &minfo)) {
 			fprintf(stderr, "ERR: Reading old 'modules_info' map.\n");
@@ -3157,16 +3237,20 @@ int insert_module(struct config *cfg)
 			fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
 			return EXIT_FAIL_BPF;
 		}
-		struct config loader_cfg = {
-			.cmd		= ADD_MODULE,
-			.new_index 	= new_index,
-			.reuse_maps = 1,
-		};
-
 		strncpy(loader_cfg.module_new_name, minfo.module_name, MAX_MODULE_NAME);
+
+		if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+			fprintf(stderr, "ERR: Reading old 'module_stats' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+		if (bpf_map_update_elem(new_stats_map_fd, &new_index, &rec, 0)) {
+			fprintf(stderr, "ERR: Updating new 'module_stats' map.\n");
+			return EXIT_FAIL_BPF;
+		}
+
 		err = module_loader(&loader_cfg, new_prog_map_fd);
 		if (err) {
-			fprintf(stderr, "ERR: Reloading module '%s'.\n", minfo.module_name);
+			fprintf(stderr, "ERR: Reloading module '%s'.\n", loader_cfg.module_new_name);
 			return err;
 		}
 
@@ -3205,6 +3289,11 @@ int insert_module(struct config *cfg)
 	}
 
 	i = MAIN_MODULE;
+	struct config loader_cfg = {
+		.cmd		= ADD_MODULE,
+		.new_index 	= i,
+		.reuse_maps = 1,
+	};
 	if (bpf_map_lookup_elem(module_map_fd, &i, &minfo)) {
 		fprintf(stderr, "ERR: Reading old 'modules_info' map.\n");
 		return EXIT_FAIL_BPF;
@@ -3217,16 +3306,19 @@ int insert_module(struct config *cfg)
 		fprintf(stderr, "ERR: Updating new 'modules_index' map.\n");
 		return EXIT_FAIL_BPF;
 	}
-	struct config loader_cfg = {
-		.cmd		= ADD_MODULE,
-		.new_index 	= i,
-		.reuse_maps = 1,
-	};
-
 	strncpy(loader_cfg.module_new_name, minfo.module_name, MAX_MODULE_NAME);
+	if (bpf_map_lookup_elem(stats_map_fd, &i, &rec)) {
+		fprintf(stderr, "ERR: Reading old 'module_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+	if (bpf_map_update_elem(new_stats_map_fd, &i, &rec, 0)) {
+		fprintf(stderr, "ERR: Updating new 'module_stats' map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
 	err = module_loader(&loader_cfg, new_prog_map_fd);
 	if (err) {
-		fprintf(stderr, "ERR: Reloading module '%s'.\n", minfo.module_name);
+		fprintf(stderr, "ERR: Reloading module '%s'.\n", loader_cfg.module_new_name);
 		return err;
 	}
 
@@ -3256,6 +3348,21 @@ int insert_module(struct config *cfg)
 	} else {
 		if (bpf_obj_pin(new_index_map_fd, map_path)) {
 			fprintf(stderr, "ERR: Pinning new 'modules_index' map\n");
+			return EXIT_FAIL_BPF;
+		}
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/module_stats", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating module_stats map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	if (remove(map_path)) {
+		fprintf(stderr, "ERR: Removing previous 'module_stats' map\n");
+		return EXIT_FAIL_OPTION;
+	} else {
+		if (bpf_obj_pin(new_stats_map_fd, map_path)) {
+			fprintf(stderr, "ERR: Pinning new 'module_stats' map\n");
 			return EXIT_FAIL_BPF;
 		}
 	}
@@ -3385,9 +3492,9 @@ int list_modules() {
 		return EXIT_FAIL_BPF;
 	}
 
-	printf("================================================================================================================\n");
+	printf("================================================================================================================================\n");
 	printf("XDP Modular Firewall");
-	printf("\n----------------------------------------------------------------------------------------------------------------\n");
+	printf("\n--------------------------------------------------------------------------------------------------------------------------------\n");
 	printf("Loaded Modules: %5d | Operating on: ", module_count);
 
 	if (bpf_map_get_next_key(dev_map_fd, NULL, &key) == 0) {
@@ -3410,13 +3517,17 @@ int list_modules() {
 		}
 
 	} else printf("-");
-	printf("\n================================================================================================================\n");
-	printf("MODULE NAME\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t%16s%16s", "MATCH PKTS", "MATCH BYTES");
-	printf("\n----------------------------------------------------------------------------------------------------------------\n");
+	printf("\n================================================================================================================================\n");
+	printf("MODULE NAME\t%8s\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\t%16s%16s", "STATUS", "MATCH PKTS", "MATCH BYTES");
+	printf("\n--------------------------------------------------------------------------------------------------------------------------------\n");
 
 	for (module_index=0; module_index<module_count; module_index++) {
 		if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo) >= 0) {
 			printf("%-11s\t", minfo.module_name);
+			if (minfo.operating)
+				printf("%8s\t", "ACTIVE");
+			else
+				printf("%8s\t", "INACTIVE");
 			print_rulekey(&minfo.key);
 			print_stats(stats_map_fd, module_index);
 			printf("\n");
@@ -3426,8 +3537,13 @@ int list_modules() {
 	module_index = MAIN_MODULE;
 	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo) >= 0) {
 		printf("%-11s\t", minfo.module_name);
+		if (minfo.operating)
+			printf("%8s\t", "ACTIVE");
+		else
+			printf("%8s\t", "INACTIVE");
 		print_rulekey(&minfo.key);
 		print_stats(stats_map_fd, module_index);
+		printf("\n");
 	}
 	printf("\n");
 
