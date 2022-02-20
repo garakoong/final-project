@@ -105,7 +105,7 @@ void parse_cmdline_args(int argc, char **argv,
 	}
 
 	/* Parse commands line args */
-	while ((opt = getopt_long(argc, argv, "hLA:a:D:d:I:i:E:e:M:m:S:F:C:O:o:n:Uqf:t:p:j:N:",
+	while ((opt = getopt_long(argc, argv, "hLN:A:X:D:I:i:E:e:M:m:S:F:C:O:o:Uqs:d:p:j:",
 				  long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 'L':
@@ -115,7 +115,7 @@ void parse_cmdline_args(int argc, char **argv,
 			}
 			cfg->cmd = LOAD_FW;
 			break;
-		case 'A':
+		case 'N':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
@@ -128,7 +128,7 @@ void parse_cmdline_args(int argc, char **argv,
 			dest  = (char *)&cfg->module_new_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
-		case 'a':
+		case 'A':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
@@ -141,7 +141,7 @@ void parse_cmdline_args(int argc, char **argv,
 			dest  = (char *)&cfg->module_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
-		case 'D':
+		case 'X':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
@@ -154,7 +154,7 @@ void parse_cmdline_args(int argc, char **argv,
 			dest  = (char *)&cfg->module_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
-		case 'd':
+		case 'D':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
@@ -180,32 +180,12 @@ void parse_cmdline_args(int argc, char **argv,
 			dest  = (char *)&cfg->module_new_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
-		case 'i':
+		case 'R':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
-			cfg->cmd = INSERT_RULE;
-			if (strlen(optarg) >= MAX_MODULE_NAME) {
-				fprintf(stderr, "ERR: module name too long\n");
-				goto error;
-			}
-			dest  = (char *)&cfg->module_name;
-			strncpy(dest, optarg, MAX_MODULE_NAME);
-			break;
-		case 'E':
-			if (cfg->cmd != PRESERVED) {
-				fprintf(stderr, "ERR: Too many command flags.");
-				goto error;
-			}
-			cfg->cmd = EDIT_MODULE;
-			break;
-		case 'e':
-			if (cfg->cmd != PRESERVED) {
-				fprintf(stderr, "ERR: Too many command flags.");
-				goto error;
-			}
-			cfg->cmd = EDIT_RULE;
+			cfg->cmd = REPLACE_MODULE;
 			break;
 		case 'M':
 			if (cfg->cmd != PRESERVED) {
@@ -269,11 +249,9 @@ void parse_cmdline_args(int argc, char **argv,
 			}
 			cfg->cmd = DEACTIVATE_MODULE;
 			break;
-		case 'N':
-			break;
-		case 'n':
+		case 'i':
 			if (strlen(optarg) >= IF_NAMESIZE) {
-				fprintf(stderr, "ERR: --networkif name too long\n");
+				fprintf(stderr, "ERR: --interface name too long\n");
 				goto error;
 			}
 			cfg->ifname = (char *)&cfg->ifname_buf;
@@ -281,7 +259,7 @@ void parse_cmdline_args(int argc, char **argv,
 			cfg->ifindex = if_nametoindex(cfg->ifname);
 			if (cfg->ifindex == 0) {
 				fprintf(stderr,
-					"ERR: --networkif name unknown err(%d):%s\n",
+					"ERR: --interface name unknown err(%d):%s\n",
 					errno, strerror(errno));
 				goto error;
 			}
@@ -292,6 +270,8 @@ void parse_cmdline_args(int argc, char **argv,
 				cfg->rule_action = XDP_PASS;
 			else if (strcmp(optarg, "REJECT") == 0)
 				cfg->rule_action = XDP_DROP;
+			else if (strcmp(optarg, "JUMP") == 0)
+				cfg->rule_action = XDP_REDIRECT;
 			else {
 				fprintf(stderr, "ERR: Action not supported. (Only 'ACCEPT' and 'REJECT' is available.\n");
 				goto error;
@@ -344,10 +324,10 @@ void parse_cmdline_args(int argc, char **argv,
 			}
 			break;
 		case 3: /* --index */
-			cfg->index = atoi(optarg) - 1;
+			cfg->module_index = atoi(optarg) - 1;
 			break;
-		case 4: /* --new-index */
-			cfg->new_index = atoi(optarg) - 1;
+		case 4: /* --rule-num */
+			cfg->rule_num = atoi(optarg) - 1;
 			break;
 		case 5: /* --icmp-type */
 			if (strcmp(optarg, "echo-request") == 0 || strcmp(optarg, "ECHO") == 0 ||
@@ -361,7 +341,14 @@ void parse_cmdline_args(int argc, char **argv,
 				goto error;
 			}
 			break;
-		case 'f':
+		case 6: /* --jmp-index */
+			cfg->jmp_index = atoi(optarg) - 1;
+			if (cfg->jmp_index < 0 || cfg->jmp_index > MAX_EXT_MODULE) {
+				fprintf(stderr, "ERR: Invalid jump index.\n");
+				goto error;
+			}
+			break;
+		case 's':
 			prefixlen = -1;
 			isLPM = 0;
 
@@ -428,7 +415,7 @@ void parse_cmdline_args(int argc, char **argv,
 				cfg->rule_key.AF = AF_INET;
 			}
 			break;
-		case 't':
+		case 'd':
 			prefixlen = -1;
 			isLPM = 0;
 
@@ -506,4 +493,14 @@ void parse_cmdline_args(int argc, char **argv,
 		}
 	}
 	free(long_options);
+
+	if (cfg->rule_num >= 0) {
+		switch(cfg->cmd) {
+			case INSERT_MODULE:
+				cfg->cmd = INSERT_RULE;
+				break;
+			default:
+				break;
+		}
+	}
 }

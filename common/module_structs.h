@@ -4,6 +4,7 @@
 struct rule_info {
     struct rule_key rule_key;
     int action;
+    int jmp_index;
 };
 
 #endif

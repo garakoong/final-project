@@ -114,8 +114,8 @@ int set_classifier_src_ip_vector(struct config *cfg, int value) {
 					memset(&vector, 0, sizeof(vector));
 				}
 
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
@@ -143,8 +143,8 @@ int set_classifier_src_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.src_ipv4_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
@@ -199,8 +199,8 @@ int set_classifier_src_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.src_ipv6, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -227,8 +227,8 @@ int set_classifier_src_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.src_ipv6_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -301,8 +301,8 @@ int set_classifier_dst_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.dst_ipv4, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -329,8 +329,8 @@ int set_classifier_dst_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.dst_ipv4_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -384,8 +384,8 @@ int set_classifier_dst_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.dst_ipv6, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -412,8 +412,8 @@ int set_classifier_dst_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.dst_ipv6_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->module_index / 64;
+				int target_bit = 63 - (cfg->module_index % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -483,8 +483,8 @@ int set_classifier_sport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->module_index / 64;
+			int target_bit = 63 - (cfg->module_index % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -513,8 +513,8 @@ int set_classifier_sport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->module_index / 64;
+			int target_bit = 63 - (cfg->module_index % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -557,8 +557,8 @@ int set_classifier_dport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->module_index / 64;
+			int target_bit = 63 - (cfg->module_index % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -588,8 +588,8 @@ int set_classifier_dport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->module_index / 64;
+			int target_bit = 63 - (cfg->module_index % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -632,8 +632,8 @@ int set_classifier_icmp_type_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->module_index / 64;
+			int target_bit = 63 - (cfg->module_index % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -662,8 +662,8 @@ int set_classifier_icmp_type_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->module_index / 64;
+			int target_bit = 63 - (cfg->module_index % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -703,8 +703,8 @@ int set_classifier_dev_vector(struct config *cfg, int value) {
 		memset(&vector, 0, sizeof(vector));
 	}
 	
-	int target_word = cfg->new_index / 64;
-	int target_bit = 63 - (cfg->new_index % 64);
+	int target_word = cfg->module_index / 64;
+	int target_bit = 63 - (cfg->module_index % 64);
 	if (value)
 		vector.word[target_word] |= (__u64)1 << target_bit;
 	else
@@ -803,10 +803,10 @@ int add_module(struct config *cfg, int isMain)
 			return EXIT_FAIL_OPTION;
 		}
 
-		cfg->new_index = module_index;
+		cfg->module_index = module_index;
 	} else {
 		module_index = MAIN_MODULE;
-		cfg->new_index = module_index;
+		cfg->module_index = module_index;
 	}
 
 	err = module_loader(cfg, -1);
@@ -827,7 +827,7 @@ int add_module(struct config *cfg, int isMain)
 		return EXIT_FAIL_BPF;
 	}
 
-	if (bpf_map_update_elem(map_fd, &cfg->new_index, &info, 0)) {
+	if (bpf_map_update_elem(map_fd, &cfg->module_index, &info, 0)) {
 		fprintf(stderr, "ERR: Error updating module info.\n");
 		return EXIT_FAIL_BPF;
 	}
@@ -845,7 +845,7 @@ int add_module(struct config *cfg, int isMain)
 		return EXIT_FAIL_BPF;
 	}
 
-	if (bpf_map_update_elem(map_fd, &cfg->module_new_name, &cfg->new_index, 0)) {
+	if (bpf_map_update_elem(map_fd, &cfg->module_new_name, &cfg->module_index, 0)) {
 		fprintf(stderr, "ERR: Error updating module index.\n");
 		return EXIT_FAIL_BPF;
 	}
@@ -885,6 +885,7 @@ int add_module(struct config *cfg, int isMain)
 			.ifindex	= 0,
 		},
 		.rule_action = cfg->rule_action,
+		.jmp_index = cfg->jmp_index,
 	};
 
 	strncpy(policy_cfg.module_name, cfg->module_new_name, MAX_MODULE_NAME);
@@ -895,7 +896,7 @@ int add_module(struct config *cfg, int isMain)
 		return err;
 	}
 
-	printf("Module '%s' successfully added to firewall at index %d.\n", cfg->module_new_name, cfg->new_index);
+	printf("Module '%s' successfully added to firewall at index %d.\n", cfg->module_new_name, cfg->module_index);
 	return EXIT_OK;
 }
 
@@ -932,7 +933,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -944,7 +945,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -989,7 +990,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_left_class_vector(cfg->index, &lpm_val.vector);
+			shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -1000,7 +1001,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_left_class_vector(cfg->index, &lpm_val.vector);
+				shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -1046,7 +1047,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -1057,7 +1058,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -1103,7 +1104,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_left_class_vector(cfg->index, &lpm_val.vector);
+			shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -1114,7 +1115,7 @@ int delete_classifier_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_left_class_vector(cfg->index, &lpm_val.vector);
+				shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -1173,7 +1174,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -1184,7 +1185,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -1229,7 +1230,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_left_class_vector(cfg->index, &lpm_val.vector);
+			shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -1240,7 +1241,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_left_class_vector(cfg->index, &lpm_val.vector);
+				shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -1285,7 +1286,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -1296,7 +1297,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -1341,7 +1342,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_left_class_vector(cfg->index, &lpm_val.vector);
+			shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -1352,7 +1353,7 @@ int delete_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_left_class_vector(cfg->index, &lpm_val.vector);
+				shift_left_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -1407,7 +1408,7 @@ int delete_classifier_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -1418,7 +1419,7 @@ int delete_classifier_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -1463,7 +1464,7 @@ int delete_classifier_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -1474,7 +1475,7 @@ int delete_classifier_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -1529,7 +1530,7 @@ int delete_classifier_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -1540,7 +1541,7 @@ int delete_classifier_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -1585,7 +1586,7 @@ int delete_classifier_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -1596,7 +1597,7 @@ int delete_classifier_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -1651,7 +1652,7 @@ int delete_classifier_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -1662,7 +1663,7 @@ int delete_classifier_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -1707,7 +1708,7 @@ int delete_classifier_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -1718,7 +1719,7 @@ int delete_classifier_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -1773,7 +1774,7 @@ int delete_classifier_dev_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_class_vector(cfg->index, &vector);
+			shift_left_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -1784,7 +1785,7 @@ int delete_classifier_dev_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_class_vector(cfg->index, &vector);
+				shift_left_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -2000,7 +2001,7 @@ int delete_module(struct config *cfg)
 		}
 		struct config loader_cfg = {
 			.cmd		= ADD_MODULE,
-			.new_index 	= new_index,
+			.module_index 	= new_index,
 			.reuse_maps = 1,
 		};
 
@@ -2035,7 +2036,7 @@ int delete_module(struct config *cfg)
 	}
 	struct config loader_cfg = {
 		.cmd		= ADD_MODULE,
-		.new_index 	= i,
+		.module_index 	= i,
 		.reuse_maps = 1,
 	};
 
@@ -2092,7 +2093,7 @@ int delete_module(struct config *cfg)
 	}
 
 	loader_cfg.cmd = DELETE_MODULE;
-	loader_cfg.index = module_index;
+	loader_cfg.module_index = module_index;
 
 	strncpy(loader_cfg.module_name, cfg->module_name, MAX_MODULE_NAME);
 	err = module_loader(&loader_cfg, -1);
@@ -2164,7 +2165,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -2176,7 +2177,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -2221,7 +2222,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -2232,7 +2233,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 				printf("%016llx\n", lpm_val.vector.word[0]);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
@@ -2279,7 +2280,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -2290,7 +2291,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -2336,7 +2337,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -2347,7 +2348,7 @@ int insert_classifier_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -2406,7 +2407,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -2417,7 +2418,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -2462,7 +2463,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -2473,7 +2474,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -2518,7 +2519,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -2529,7 +2530,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -2574,7 +2575,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_right_class_vector(cfg->index, &lpm_val.vector);
+			shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -2585,7 +2586,7 @@ int insert_classifier_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_right_class_vector(cfg->index, &lpm_val.vector);
+				shift_right_class_vector(cfg->module_index, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -2640,7 +2641,7 @@ int insert_classifier_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -2651,7 +2652,7 @@ int insert_classifier_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -2696,7 +2697,7 @@ int insert_classifier_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -2707,7 +2708,7 @@ int insert_classifier_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -2762,7 +2763,7 @@ int insert_classifier_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -2773,7 +2774,7 @@ int insert_classifier_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -2818,7 +2819,7 @@ int insert_classifier_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -2829,7 +2830,7 @@ int insert_classifier_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -2884,7 +2885,7 @@ int insert_classifier_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -2895,7 +2896,7 @@ int insert_classifier_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -2940,7 +2941,7 @@ int insert_classifier_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -2951,7 +2952,7 @@ int insert_classifier_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -3006,7 +3007,7 @@ int insert_classifier_dev_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_class_vector(cfg->index, &vector);
+			shift_right_class_vector(cfg->module_index, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -3017,7 +3018,7 @@ int insert_classifier_dev_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_class_vector(cfg->index, &vector);
+				shift_right_class_vector(cfg->module_index, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -3104,7 +3105,6 @@ int insert_module(struct config *cfg)
 	struct module_info minfo;
 	int nr_cpus = libbpf_num_possible_cpus();
 	struct stats_rec rec[nr_cpus];
-	cfg->new_index = cfg->index;
 
 	// get module index
 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
@@ -3173,14 +3173,14 @@ int insert_module(struct config *cfg)
 		return EXIT_FAIL_OPTION;
 	}
 
-	if (cfg->index >= module_count) {
-		printf("WARN: Firewall has only %d modules. This rule would be appended to module instead.\n", module_count);
-		err = add_rule(cfg, 0);
+	if (cfg->module_index >= module_count) {
+		printf("WARN: Firewall has only %d modules. This moodule would be appended instead.\n", module_count);
+		err = add_module(cfg, 0);
 		return err;
 	}
 
-	if (cfg->index < 0 || cfg->index >= MAX_MODULE) {
-		fprintf(stderr, "ERR: Invalid rule index (index=%d).\n", cfg->index);
+	if (cfg->module_index < 0 || cfg->module_index >= MAX_MODULE) {
+		fprintf(stderr, "ERR: Invalid module index (index=%d).\n", cfg->module_index);
 		return EXIT_FAIL_OPTION;
 	}
 
@@ -3221,7 +3221,7 @@ int insert_module(struct config *cfg)
 		int new_index = i;
 		struct config loader_cfg = {
 			.cmd		= ADD_MODULE,
-			.new_index 	= new_index,
+			.module_index 	= new_index,
 			.reuse_maps = 1,
 		};
 		if (i >= module_index) new_index++;
@@ -3254,7 +3254,7 @@ int insert_module(struct config *cfg)
 			return err;
 		}
 
-		if (i == cfg->index) {
+		if (i == cfg->module_index) {
 
 			struct module_info new_minfo = {
 				.key	= cfg->rule_key,
@@ -3274,7 +3274,7 @@ int insert_module(struct config *cfg)
 			}
 			struct config loader_cfg = {
 				.cmd		= ADD_MODULE,
-				.new_index 	= i,
+				.module_index 	= i,
 				.reuse_maps = 0,
 			};
 
@@ -3291,7 +3291,7 @@ int insert_module(struct config *cfg)
 	i = MAIN_MODULE;
 	struct config loader_cfg = {
 		.cmd		= ADD_MODULE,
-		.new_index 	= i,
+		.module_index 	= i,
 		.reuse_maps = 1,
 	};
 	if (bpf_map_lookup_elem(module_map_fd, &i, &minfo)) {
@@ -3385,6 +3385,7 @@ int insert_module(struct config *cfg)
 			.ifindex	= 0,
 		},
 		.rule_action = cfg->rule_action,
+		.jmp_index = cfg->jmp_index,
 	};
 
 	strncpy(policy_cfg.module_name, cfg->module_new_name, MAX_MODULE_NAME);

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 static const char *__doc__ = "XDP MODULAR FIREWALL\n"
-	" - Allows selecting BPF section --progsec name to XDP-attach to --networkif\n";
+	" - Allows selecting BPF section --progsec name to XDP-attach to --interface\n";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,31 +33,28 @@ static const struct option_wrapper long_options[] = {
 	{{"load-fw",       no_argument,		NULL, 'L' },
 	 "Load firewall, pin maps, and operate firewall on <ifname> if given.", "[-n <ifname>]"},
 
-	{{"add-module",	required_argument,	NULL, 'A' },
+	{{"show",	required_argument,	NULL, 'S' },
+	 "Show info of module <module name>. (if '-' is given, show firewall's info)", "<module name>"},
+
+	{{"new-module",	required_argument,	NULL, 'N' },
 	 "Add module <module name> to firewall.", "<module name> [options]"},
 
-	{{"add-rule",	required_argument,	NULL, 'a' },
+	{{"add-rule",	required_argument,	NULL, 'A' },
 	 "Add rule to module <module name>.", "<module name> [options]"},
 
-	{{"delete-module",	required_argument,	NULL, 'D' },
+	{{"delete-module",	required_argument,	NULL, 'X' },
 	 "Delete module <module name> from firewall.", "<module name>"},
 
-	{{"delete-rule",	required_argument,	NULL, 'd' },
-	 "Delete rule number <rule num> from module <module name>. (use --index to define <rule num>)", "<module name>"},
+	{{"delete-rule",	required_argument,	NULL, 'D' },
+	 "Delete rule number <rule num> from module <module name>. (use --rule-num to define <rule num>)", "<module name>"},
 
 	{{"insert-module",	required_argument,	NULL, 'I' },
 	 "Insert module <module name> to module number <module num> of firewall.", "<module name>"},
 
 	{{"insert-rule",	required_argument,	NULL, 'i' },
-	 "Insert rule as rule number <rule num> of module <module name>.", "<module name>"},
+	 "Insert rule as rule number <rule num> of module <module name>. (use --rule-num to define <rule num>)", "<module name>"},
 
-	{{"edit-module",	required_argument,	NULL, 'E' },
-	 "Edit module <module name>.", "<module name> [options]"},
-
-	{{"edit-rule",	required_argument,	NULL, 'e' },
-	 "Edit rule <rule num> of module <module name>.", "<module name> [options]"},
-
-	{{"networkif",	required_argument,	NULL, 'n' },
+	{{"interface",	required_argument,	NULL, 'i' },
 	 "Operate on device <ifname>", "<ifname>"},
 
 	{{"force",       no_argument,		NULL, 'F' },
@@ -76,13 +73,16 @@ static const struct option_wrapper long_options[] = {
 	 "Destination port number", "<dport>"},
 
 	{{"index",    required_argument,	NULL,  3  },
-	 "Rule / Module index", "<index>"},
+	 "Module index", "<index>"},
 
-	{{"new-index",    required_argument,	NULL,  4  },
-	 "Rule / Module new index", "<new-index>"},
+	{{"rule-num",    required_argument,	NULL,  4  },
+	 "Rule number", "<rule num>"},
 
 	{{"icmp-type",    required_argument,	NULL,  5  },
 	 "ICMP packet type.", "<type>"},
+
+	{{"jmp-index",    required_argument,	NULL,  6  },
+	 "Jump index.", "<jump index>"},
 
 	{{0, 0, NULL,  0 }, NULL, false}
 };
@@ -121,8 +121,9 @@ int main(int argc, char **argv)
 			.ifindex	= 0,
 		},
 		.rule_action = XDP_ABORTED,
-		.index = -1,
-		.new_index = -1,
+		.rule_num = -1,
+		.module_index = -1,
+		.jmp_index = -1,
 	};
 
 	memset(&cfg.rule_key.src_ipv4_lpm, 0, ipv4_lpm_key_size);
@@ -132,6 +133,11 @@ int main(int argc, char **argv)
 	
 	/* Cmdline options can change progsec */
 	parse_cmdline_args(argc, argv, long_options, &cfg, __doc__);
+
+	if (cfg.module_index >= 0 && cfg.rule_num >= 0) {
+		fprintf(stderr, "ERR: Option --index and --rule-num can not be used together.\n");
+		return EXIT_FAIL_OPTION;
+	}
 
 	if ((cfg.rule_key.proto != IPPROTO_TCP && cfg.rule_key.proto != IPPROTO_UDP) &&
 		(cfg.rule_key.sport != 0 || cfg.rule_key.dport != 0)) {
@@ -181,6 +187,9 @@ int main(int argc, char **argv)
 			if (cfg.rule_action == XDP_ABORTED) {
 				printf("WARN: Module's policy is not set. Default is ACCEPT\n");
 				cfg.rule_action = XDP_PASS;
+			} else if (cfg.rule_action == XDP_REDIRECT && cfg.jmp_index < 0) {
+				fprintf(stderr, "ERR: Jump index is not set. (--jmp-index option is required)\n");
+				return EXIT_FAIL_OPTION;
 			}
 
 			err = add_module(&cfg, 0);
@@ -197,8 +206,15 @@ int main(int argc, char **argv)
 			}
 			break;
 		case INSERT_MODULE:
-			if (cfg.index < 0) {
+			if (cfg.module_index < 0) {
 				fprintf(stderr, "ERR: Module index is not set. (--index option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			if (cfg.rule_action == XDP_ABORTED) {
+				printf("WARN: Module's policy is not set. Default is ACCEPT\n");
+				cfg.rule_action = XDP_PASS;
+			} else if (cfg.rule_action == XDP_REDIRECT && cfg.jmp_index < 0) {
+				fprintf(stderr, "ERR: Jump index is not set. (--jmp-index option is required)\n");
 				return EXIT_FAIL_OPTION;
 			}
 
@@ -212,6 +228,9 @@ int main(int argc, char **argv)
 			if (cfg.rule_action == XDP_ABORTED) {
 				fprintf(stderr, "ERR: Rule's action is not set. (-j option is required.)\n");
 				return EXIT_FAIL_OPTION;
+			} else if (cfg.rule_action == XDP_REDIRECT && cfg.jmp_index < 0) {
+				fprintf(stderr, "ERR: Jump index is not set. (--jmp-index option is required)\n");
+				return EXIT_FAIL_OPTION;
 			}
 
 			err = add_rule(&cfg, 0);
@@ -221,8 +240,8 @@ int main(int argc, char **argv)
 			}
 			break;
 		case DELETE_RULE:
-			if (cfg.index < 0) {
-				fprintf(stderr, "ERR: Rule index is not set. (--index option is required.)\n");
+			if (cfg.rule_num < 0) {
+				fprintf(stderr, "ERR: Rule number is not set. (--rule-num option is required.)\n");
 				return EXIT_FAIL_OPTION;
 			}
 			err = delete_rule(&cfg);
@@ -232,13 +251,20 @@ int main(int argc, char **argv)
 			}
 			break;
 		case INSERT_RULE:
-			if (cfg.index < 0) {
-				fprintf(stderr, "ERR: Rule index is not set. (--index option is required.)\n");
+			if (cfg.rule_num < 0) {
+				fprintf(stderr, "ERR: Rule number is not set. (--rule-num option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			if (cfg.rule_action == XDP_ABORTED) {
+				fprintf(stderr, "ERR: Rule's action is not set. (-j option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			} else if (cfg.rule_action == XDP_REDIRECT && cfg.jmp_index < 0) {
+				fprintf(stderr, "ERR: Jump index is not set. (--jmp-index option is required)\n");
 				return EXIT_FAIL_OPTION;
 			}
 			err = insert_rule(&cfg);
 			if (err) {
-				fprintf(stderr, "ERR: inserting rule to module %s at index %d.\n", cfg.module_name, cfg.new_index);
+				fprintf(stderr, "ERR: inserting rule to module %s at index %d.\n", cfg.module_name, cfg.rule_num);
 				return err;
 			}
 			break;

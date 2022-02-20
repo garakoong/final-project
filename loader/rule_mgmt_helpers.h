@@ -112,8 +112,8 @@ int set_src_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.src_ipv4, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -140,8 +140,8 @@ int set_src_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.src_ipv4_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -197,8 +197,8 @@ int set_src_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.src_ipv6, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -225,8 +225,8 @@ int set_src_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.src_ipv6_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -299,8 +299,8 @@ int set_dst_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.dst_ipv4, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -327,8 +327,8 @@ int set_dst_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.dst_ipv4_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -382,8 +382,8 @@ int set_dst_ip_vector(struct config *cfg, int value) {
 				if (bpf_map_lookup_elem(map_fd, &cfg->rule_key.dst_ipv6, &vector) == -1) {
 					memset(&vector, 0, sizeof(vector));
 				}
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -410,8 +410,8 @@ int set_dst_ip_vector(struct config *cfg, int value) {
 					memset(&lpm_val, 0, sizeof(lpm_val));
 				}
 				lpm_val.prefixlen = cfg->rule_key.dst_ipv6_lpm.word[0];
-				int target_word = cfg->new_index / 64;
-				int target_bit = 63 - (cfg->new_index % 64);
+				int target_word = cfg->rule_num / 64;
+				int target_bit = 63 - (cfg->rule_num % 64);
 				if (value)
 					lpm_val.vector.word[target_word] |= (__u64)1 << target_bit;
 				else
@@ -481,8 +481,8 @@ int set_sport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->rule_num / 64;
+			int target_bit = 63 - (cfg->rule_num % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -511,8 +511,8 @@ int set_sport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->rule_num / 64;
+			int target_bit = 63 - (cfg->rule_num % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -555,8 +555,8 @@ int set_dport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->rule_num / 64;
+			int target_bit = 63 - (cfg->rule_num % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -585,8 +585,8 @@ int set_dport_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->rule_num / 64;
+			int target_bit = 63 - (cfg->rule_num % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -629,8 +629,8 @@ int set_icmp_type_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->rule_num / 64;
+			int target_bit = 63 - (cfg->rule_num % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -659,8 +659,8 @@ int set_icmp_type_vector(struct config *cfg, int value) {
 				memset(&vector, 0, sizeof(vector));
 			}
 
-			int target_word = cfg->new_index / 64;
-			int target_bit = 63 - (cfg->new_index % 64);
+			int target_word = cfg->rule_num / 64;
+			int target_bit = 63 - (cfg->rule_num % 64);
 			if (value)
 				vector.word[target_word] |= (__u64)1 << target_bit;
 			else
@@ -700,8 +700,8 @@ int set_dev_vector(struct config *cfg, int value) {
 		memset(&vector, 0, sizeof(vector));
 	}
 	
-	int target_word = cfg->new_index / 64;
-	int target_bit = 63 - (cfg->new_index % 64);
+	int target_word = cfg->rule_num / 64;
+	int target_bit = 63 - (cfg->rule_num % 64);
 	if (value)
 		vector.word[target_word] |= (__u64)1 << target_bit;
 	else
@@ -770,6 +770,7 @@ int add_rule(struct config *cfg, int isPolicy)
 	struct rule_info rinfo = {
 		.rule_key = cfg->rule_key,
 		.action = cfg->rule_action,
+		.jmp_index = cfg->jmp_index,
 	};
 	struct module_info minfo;
 
@@ -825,8 +826,8 @@ int add_rule(struct config *cfg, int isPolicy)
 			return EXIT_FAIL_OPTION;
 		}
 
-		cfg->new_index = minfo.rule_count;
-	} else cfg->new_index = POLICY_RULE;
+		cfg->rule_num = minfo.rule_count;
+	} else cfg->rule_num = POLICY_RULE;
 
 	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
 	if (len < 0) {
@@ -840,7 +841,7 @@ int add_rule(struct config *cfg, int isPolicy)
 		return EXIT_FAIL_BPF;
 	}
 
-	if (bpf_map_update_elem(rule_map_fd, &cfg->new_index, &rinfo, 0)) {
+	if (bpf_map_update_elem(rule_map_fd, &cfg->rule_num, &rinfo, 0)) {
 		fprintf(stderr, "ERR: Updating rules info.\n");
 		return EXIT_FAIL_BPF;
 	}
@@ -859,7 +860,7 @@ int add_rule(struct config *cfg, int isPolicy)
 			fprintf(stderr, "ERR: Updating modules info.\n");
 			return EXIT_FAIL_BPF;
 		}
-		printf("Rule successfully added to module %s at index %d.\n", cfg->module_name, cfg->new_index);
+		printf("Rule successfully added to module %s at index %d.\n", cfg->module_name, cfg->rule_num);
 	}
 
 	return EXIT_OK;
@@ -898,7 +899,7 @@ int delete_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -910,7 +911,7 @@ int delete_src_ip_vector(struct config *cfg) {
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -955,7 +956,7 @@ int delete_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_left_vector(cfg->index, &lpm_val.vector);
+			shift_left_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -966,7 +967,7 @@ int delete_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_left_vector(cfg->index, &lpm_val.vector);
+				shift_left_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -1012,7 +1013,7 @@ int delete_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -1023,7 +1024,7 @@ int delete_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -1070,7 +1071,7 @@ int delete_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_left_vector(cfg->index, &lpm_val.vector);
+			shift_left_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -1081,7 +1082,7 @@ int delete_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_left_vector(cfg->index, &lpm_val.vector);
+				shift_left_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -1140,7 +1141,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -1151,7 +1152,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -1197,7 +1198,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_left_vector(cfg->index, &lpm_val.vector);
+			shift_left_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -1208,7 +1209,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_left_vector(cfg->index, &lpm_val.vector);
+				shift_left_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -1254,7 +1255,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -1265,7 +1266,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -1311,7 +1312,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_left_vector(cfg->index, &lpm_val.vector);
+			shift_left_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -1322,7 +1323,7 @@ int delete_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_left_vector(cfg->index, &lpm_val.vector);
+				shift_left_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -1378,7 +1379,7 @@ int delete_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -1389,7 +1390,7 @@ int delete_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -1435,7 +1436,7 @@ int delete_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -1446,7 +1447,7 @@ int delete_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -1502,7 +1503,7 @@ int delete_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -1513,7 +1514,7 @@ int delete_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -1558,7 +1559,7 @@ int delete_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd,NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -1569,7 +1570,7 @@ int delete_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -1624,7 +1625,7 @@ int delete_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -1635,7 +1636,7 @@ int delete_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -1680,7 +1681,7 @@ int delete_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd,NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -1691,7 +1692,7 @@ int delete_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -1746,7 +1747,7 @@ int delete_dev_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_left_vector(cfg->index, &vector);
+			shift_left_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -1757,7 +1758,7 @@ int delete_dev_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_left_vector(cfg->index, &vector);
+				shift_left_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -1887,8 +1888,8 @@ int delete_rule(struct config *cfg)
 		return EXIT_FAIL_OPTION;
 	}
 
-	if (minfo.rule_count <= cfg->index || cfg->index < 0 || cfg->index >= MAX_RULE) {
-		fprintf(stderr, "ERR: rule index %d not available. (index 1 - %d are available)\n", cfg->index+1, minfo.rule_count);
+	if (minfo.rule_count <= cfg->rule_num || cfg->rule_num < 0 || cfg->rule_num >= MAX_RULE) {
+		fprintf(stderr, "ERR: rule number %d not available. (number 1 - %d are available)\n", cfg->rule_num+1, minfo.rule_count);
 		return EXIT_FAIL_OPTION;
 	}
 
@@ -1936,9 +1937,9 @@ int delete_rule(struct config *cfg)
 
 	int i;
 	for (i=0; i<minfo.rule_count; i++) {
-		if (i == cfg->index) continue;
+		if (i == cfg->rule_num) continue;
 		int new_index = i;
-		if (i > cfg->index) new_index--;
+		if (i > cfg->rule_num) new_index--;
 		if (bpf_map_lookup_elem(rule_map_fd, &i, &rinfo)) {
 			fprintf(stderr, "ERR: Reading old 'rules_info' map.\n");
 			return EXIT_FAIL_BPF;
@@ -2003,7 +2004,7 @@ int delete_rule(struct config *cfg)
 
 	struct config loader_cfg = {
 		.cmd		= ADD_MODULE,
-		.new_index 	= module_index,
+		.module_index 	= module_index,
 		.reuse_maps = 1,
 	};
 
@@ -2056,7 +2057,7 @@ int insert_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -2068,7 +2069,7 @@ int insert_src_ip_vector(struct config *cfg) {
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_vector' map.\n");
@@ -2113,7 +2114,7 @@ int insert_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_right_vector(cfg->index, &lpm_val.vector);
+			shift_right_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -2124,7 +2125,7 @@ int insert_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_right_vector(cfg->index, &lpm_val.vector);
+				shift_right_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv4_lpm_vector' map.\n");
@@ -2170,7 +2171,7 @@ int insert_src_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -2181,7 +2182,7 @@ int insert_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_vector' map.\n");
@@ -2229,7 +2230,7 @@ int insert_src_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_right_vector(cfg->index, &lpm_val.vector);
+			shift_right_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -2240,7 +2241,7 @@ int insert_src_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_right_vector(cfg->index, &lpm_val.vector);
+				shift_right_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'src_ipv6_lpm_vector' map.\n");
@@ -2299,7 +2300,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -2310,7 +2311,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_prev, &ipv4_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_vector' map.\n");
@@ -2356,7 +2357,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv4_lpm_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-			shift_right_vector(cfg->index, &lpm_val.vector);
+			shift_right_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -2367,7 +2368,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv4_lpm_prev, &ipv4_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv4_lpm_key, &lpm_val) >= 0) {
-				shift_right_vector(cfg->index, &lpm_val.vector);
+				shift_right_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv4_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv4_lpm_vector' map.\n");
@@ -2412,7 +2413,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -2423,7 +2424,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_prev, &ipv6_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_vector' map.\n");
@@ -2469,7 +2470,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 	if (bpf_map_get_next_key(map_fd, NULL, &ipv6_lpm_key) == 0) {
 
 		if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-			shift_right_vector(cfg->index, &lpm_val.vector);
+			shift_right_vector(cfg->rule_num, &lpm_val.vector);
 			err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -2480,7 +2481,7 @@ int insert_dst_ip_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &ipv6_lpm_prev, &ipv6_lpm_key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &ipv6_lpm_key, &lpm_val) >= 0) {
-				shift_right_vector(cfg->index, &lpm_val.vector);
+				shift_right_vector(cfg->rule_num, &lpm_val.vector);
 				err = bpf_map_update_elem(new_map_fd, &ipv6_lpm_key, &lpm_val, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dst_ipv6_lpm_vector' map.\n");
@@ -2535,7 +2536,7 @@ int insert_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -2546,7 +2547,7 @@ int insert_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_sport_vector' map.\n");
@@ -2592,7 +2593,7 @@ int insert_sport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -2603,7 +2604,7 @@ int insert_sport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_sport_vector' map.\n");
@@ -2658,7 +2659,7 @@ int insert_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -2669,7 +2670,7 @@ int insert_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'tcp_dport_vector' map.\n");
@@ -2715,7 +2716,7 @@ int insert_dport_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -2726,7 +2727,7 @@ int insert_dport_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'udp_dport_vector' map.\n");
@@ -2781,7 +2782,7 @@ int insert_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -2792,7 +2793,7 @@ int insert_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmp_type_vector' map.\n");
@@ -2838,7 +2839,7 @@ int insert_icmp_type_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -2849,7 +2850,7 @@ int insert_icmp_type_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'icmpv6_type_vector' map.\n");
@@ -2904,7 +2905,7 @@ int insert_dev_vector(struct config *cfg) {
 
 	if (bpf_map_get_next_key(map_fd, NULL, &key) == 0) {
 		if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-			shift_right_vector(cfg->index, &vector);
+			shift_right_vector(cfg->rule_num, &vector);
 			err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 			if (err) {
 				fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -2915,7 +2916,7 @@ int insert_dev_vector(struct config *cfg) {
 
 		while (bpf_map_get_next_key(map_fd, &prev_key, &key) == 0) {
 			if (bpf_map_lookup_elem(map_fd, &key, &vector) >= 0) {
-				shift_right_vector(cfg->index, &vector);
+				shift_right_vector(cfg->rule_num, &vector);
 				err = bpf_map_update_elem(new_map_fd, &key, &vector, 0);
 				if (err) {
 					fprintf(stderr, "ERR: Updating new 'dev_vector' map.\n");
@@ -2999,9 +3000,9 @@ int insert_rule(struct config *cfg)
 	struct rule_info rinfo = {
 		.rule_key = cfg->rule_key,
 		.action = cfg->rule_action,
+		.jmp_index = cfg->jmp_index,
 	};
 	struct module_info minfo;
-	cfg->new_index = cfg->index;
 	int nr_cpus = libbpf_num_possible_cpus();
 	struct stats_rec rec[nr_cpus];
 
@@ -3054,14 +3055,14 @@ int insert_rule(struct config *cfg)
 		return EXIT_FAIL_OPTION;
 	}
 
-	if (cfg->index >= minfo.rule_count) {
+	if (cfg->rule_num >= minfo.rule_count) {
 		printf("WARN: Module %s has only %d rules. This rule would be appended to module instead.\n", cfg->module_name, minfo.rule_count);
 		err = add_rule(cfg, 0);
 		return err;
 	}
 
-	if (cfg->index < 0 || cfg->index >= MAX_RULE) {
-		fprintf(stderr, "ERR: Invalid rule index (index=%d).\n", cfg->index);
+	if (cfg->rule_num < 0 || cfg->rule_num >= MAX_RULE) {
+		fprintf(stderr, "ERR: Invalid rule index (index=%d).\n", cfg->rule_num);
 		return EXIT_FAIL_OPTION;
 	}
 
@@ -3110,7 +3111,7 @@ int insert_rule(struct config *cfg)
 	int i;
 	for (i=minfo.rule_count; i>=0; i--) {
 		int new_index = i;
-		if (i >= cfg->index) new_index++;
+		if (i >= cfg->rule_num) new_index++;
 		if (bpf_map_lookup_elem(rule_map_fd, &i, &rinfo)) {
 			fprintf(stderr, "ERR: Reading old 'rules_info' map.\n");
 			return EXIT_FAIL_BPF;
@@ -3127,10 +3128,11 @@ int insert_rule(struct config *cfg)
 			fprintf(stderr, "ERR: Updating new 'rule_stats' map.\n");
 			return EXIT_FAIL_BPF;
 		}
-		if (i == cfg->index) {
+		if (i == cfg->rule_num) {
 			struct rule_info new_rinfo = {
 				.rule_key = cfg->rule_key,
 				.action = cfg->rule_action,
+				.jmp_index = cfg->jmp_index,
 			};
 			if (bpf_map_update_elem(new_rule_map_fd, &i, &new_rinfo, 0)) {
 				fprintf(stderr, "ERR: Updating new 'rules_info' map.\n");
@@ -3185,7 +3187,7 @@ int insert_rule(struct config *cfg)
 
 	struct config loader_cfg = {
 		.cmd		= ADD_MODULE,
-		.new_index 	= module_index,
+		.module_index 	= module_index,
 		.reuse_maps = 1,
 	};
 
@@ -3299,6 +3301,8 @@ int list_rules(struct config *cfg) {
 		printf("ACCEPT");
 	else if (rinfo.action == XDP_DROP)
 		printf("REJECT");
+	else if (rinfo.action == XDP_REDIRECT)
+		printf("JUMP[%d]", rinfo.jmp_index+1);
 
 	printf("\n================================================================================================================================\n");
 	printf("  NO.\tSOURCE\t\tDEST\t\tPROT\tDEV\t\t\tACTION%16s%16s", "MATCH PKTS", "MATCH BYTES");
@@ -3312,6 +3316,8 @@ int list_rules(struct config *cfg) {
 				printf("ACCEPT");
 			else if (rinfo.action == XDP_DROP)
 				printf("REJECT");
+			else if (rinfo.action == XDP_REDIRECT)
+				printf("JUMP[%d]", rinfo.jmp_index+1);
 			print_stats(stats_map_fd, index);
 			printf("\n");
 		}

@@ -468,7 +468,7 @@ int module_loader(struct config *cfg, int progarr_fd)
 		}
 	}
 
-	if (bpf_map_update_elem(prog_map_fd, &cfg->new_index, &prog_fd, 0)) {
+	if (bpf_map_update_elem(prog_map_fd, &cfg->module_index, &prog_fd, 0)) {
 		fprintf(stderr, "ERR: Adding module to firewall.\n");
 		return EXIT_FAIL_BPF;
 	}

@@ -126,18 +126,30 @@ int fw_module(struct xdp_md *ctx)
 verdict:
 	info = bpf_map_lookup_elem(&rules_info, &rule_num);
 	if (info) {
-		int rule_action = info->action;
-
-		if (rule_num >= 0 && rule_num < POLICY_RULE) {
-			struct stats_rec *rec = bpf_map_lookup_elem(&rule_stats, &rule_num);
-			if (rec) {
-				rec->match_packets++;
-				rec->match_bytes += (ctx->data_end - ctx->data);
+		if (info->action == XDP_REDIRECT) {
+			if (rule_num >= 0 && rule_num < POLICY_RULE) {
+				struct stats_rec *rec = bpf_map_lookup_elem(&rule_stats, &rule_num);
+				if (rec) {
+					rec->match_packets++;
+					rec->match_bytes += (ctx->data_end - ctx->data);
+				}
 			}
-		}
+			bpf_tail_call(ctx, &jmp_table, info->jmp_index);
+		} else {
+			int rule_action = info->action;
 
-		bpf_printk("action(%d): %d (%lx)\n", rule_num, rule_action, lookup_res.word[0]);
-		return rule_action;
+			if (rule_num >= 0 && rule_num < POLICY_RULE) {
+				struct stats_rec *rec = bpf_map_lookup_elem(&rule_stats, &rule_num);
+				if (rec) {
+					rec->match_packets++;
+					rec->match_bytes += (ctx->data_end - ctx->data);
+				}
+			}
+
+			bpf_printk("action(%d): %d (%lx)\n", rule_num, rule_action, lookup_res.word[0]);
+			return rule_action;
+		}
+		
 	}
 
 out:

@@ -18,13 +18,13 @@ enum CMD {
 	DEACTIVATE_MODULE,
 	DELETE_MODULE,
 	INSERT_MODULE,
-	EDIT_MODULE,
+	REPLACE_MODULE,
 	MOVE_MODULE,
 	SHOW_MODULE_STATS,
 	ADD_RULE,
 	DELETE_RULE,
 	INSERT_RULE,
-	EDIT_RULE,
+	REPLACE_RULE,
 	MOVE_RULE,
 	FLUSH_MODULE_STATS,
 	FLUSH_FW_STATS,
@@ -45,8 +45,9 @@ struct config {
 	char module_name[MAX_MODULE_NAME];
 	char module_new_name[MAX_MODULE_NAME];
 	struct rule_key rule_key;
-	int index;
-	int new_index;
+	int rule_num;
+	int module_index;
+	int jmp_index;
 	int rule_action;
 };
 
