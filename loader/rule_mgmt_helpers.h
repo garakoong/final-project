@@ -2008,7 +2008,7 @@ int delete_rule(struct config *cfg)
 		.reuse_maps = 1,
 	};
 
-	strncpy(loader_cfg.module_new_name, cfg->module_name, MAX_MODULE_NAME);
+	strncpy(loader_cfg.module_name, cfg->module_name, MAX_MODULE_NAME);
 	err = module_loader(&loader_cfg, -1);
 	if (err) {
 		fprintf(stderr, "ERR: Reloading module '%s'.\n", cfg->module_name);
@@ -3191,7 +3191,7 @@ int insert_rule(struct config *cfg)
 		.reuse_maps = 1,
 	};
 
-	strncpy(loader_cfg.module_new_name, cfg->module_name, MAX_MODULE_NAME);
+	strncpy(loader_cfg.module_name, cfg->module_name, MAX_MODULE_NAME);
 	err = module_loader(&loader_cfg, -1);
 	if (err) {
 		fprintf(stderr, "ERR: Reloading module '%s'.\n", cfg->module_name);

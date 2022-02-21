@@ -1,8 +1,8 @@
 #ifndef __COMMON_FIREWALL_H
 #define __COMMON_FIREWALL_H
-#define MAX_MODULE 500
-#define MAIN_MODULE 500
-#define MAX_CLASS_WORD 8
+#define MAX_MODULE 100
+#define MAIN_MODULE 100
+#define MAX_CLASS_WORD 2
 #define MAX_MODULE_NAME 64
 #define MAX_RULE 3000
 #define MAX_RULE_WORD 50

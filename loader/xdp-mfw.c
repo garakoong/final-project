@@ -30,7 +30,7 @@ static const struct option_wrapper long_options[] = {
 	{{"help",        no_argument,		NULL, 'h' },
 	 "Show help", false},
 
-	{{"load-fw",       no_argument,		NULL, 'L' },
+	{{"load",       no_argument,		NULL, 'L' },
 	 "Load firewall, pin maps, and operate firewall on <ifname> if given.", "[-n <ifname>]"},
 
 	{{"show",	required_argument,	NULL, 'S' },
@@ -54,11 +54,14 @@ static const struct option_wrapper long_options[] = {
 	{{"insert-rule",	required_argument,	NULL, 'i' },
 	 "Insert rule as rule number <rule num> of module <module name>. (use --rule-num to define <rule num>)", "<module name>"},
 
+	{{"activate",    required_argument,	NULL,  7  },
+	 "Activate module <module name>.", "<module name>"},
+
+	{{"deactivate",    required_argument,	NULL,  8  },
+	 "Deactivate module <module name>.", "<module name>"},
+
 	{{"interface",	required_argument,	NULL, 'i' },
 	 "Operate on device <ifname>", "<ifname>"},
-
-	{{"force",       no_argument,		NULL, 'F' },
-	 "Force install, replacing existing program on interface"},
 
 	{{"unload",      no_argument,		NULL, 'U' },
 	 "Unload XDP program instead of loading"},
@@ -155,7 +158,7 @@ int main(int argc, char **argv)
 
 	switch(cfg.cmd) {
 		case LOAD_FW:
-			strncpy(cfg.module_new_name, "MAIN", MAX_MODULE_NAME);
+			strncpy(cfg.module_name, "MAIN", MAX_MODULE_NAME);
 			cfg.rule_action = XDP_PASS;
 			err = root_loader(&cfg);
 			if (err) {
@@ -265,6 +268,14 @@ int main(int argc, char **argv)
 			err = insert_rule(&cfg);
 			if (err) {
 				fprintf(stderr, "ERR: inserting rule to module %s at index %d.\n", cfg.module_name, cfg.rule_num);
+				return err;
+			}
+			break;
+		case ACTIVATE_MODULE:
+		case DEACTIVATE_MODULE:
+			err = change_module_status(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: changing module %s's status.\n", cfg.module_name);
 				return err;
 			}
 			break;

@@ -125,7 +125,7 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: module name too long\n");
 				goto error;
 			}
-			dest  = (char *)&cfg->module_new_name;
+			dest  = (char *)&cfg->module_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 'A':
@@ -177,7 +177,7 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: module name too long\n");
 				goto error;
 			}
-			dest  = (char *)&cfg->module_new_name;
+			dest  = (char *)&cfg->module_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 'R':
@@ -235,18 +235,30 @@ void parse_cmdline_args(int argc, char **argv,
 			cfg->cmd = FLUSH_FW_STATS;
 			/* check module name, if not '-' cfg->cmd = FLUSH_MODULE_STATS */
 			break;
-		case 'O':
+		case 7: /* --activate */
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			cfg->cmd = ACTIVATE_MODULE;
 			break;
-		case 'o':
+		case 8: /* --deactivate */
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			cfg->cmd = DEACTIVATE_MODULE;
 			break;
 		case 'i':

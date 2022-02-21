@@ -243,7 +243,7 @@ int root_loader(struct config *cfg)
 				return EXIT_FAIL_BPF;
 			}
 			initval = 0;
-			if (bpf_map_update_elem(map_fd, &cfg->ifindex, &initval, BPF_EXIST)) {
+			if (bpf_map_delete_elem(map_fd, &cfg->ifindex)) {
 				fprintf(stderr, "ERR: updating 'operating_dev' map.\n");
 				return EXIT_FAIL_BPF;
 			}
@@ -363,14 +363,8 @@ int module_loader(struct config *cfg, int progarr_fd)
 	/* Set default BPF-ELF object file and BPF program name */
 	strncpy(cfg->filename, module_filename, sizeof(cfg->filename));
 
-	if (cfg->cmd == ADD_MODULE)
-		len = snprintf(cfg->pin_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_new_name);
-	else if (cfg->cmd == DELETE_MODULE)
-		len = snprintf(cfg->pin_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_name);
-	else {
-		fprintf(stderr, "ERR: Invalid command.\n");
-		return EXIT_FAIL_OPTION;
-	}
+	
+	len = snprintf(cfg->pin_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_name);
 	if (len < 0) {
 		fprintf(stderr, "ERR: creating pin dirname\n");
 		return EXIT_FAIL_OPTION;
@@ -414,7 +408,7 @@ int module_loader(struct config *cfg, int progarr_fd)
 	}
 
 	if (module_exists && !cfg->reuse_maps) {
-		if (strcmp(cfg->module_new_name, "MAIN") == 0)
+		if (strcmp(cfg->module_name, "MAIN") == 0)
 			return 0;
 		else {
 			fprintf(stderr, "ERR: Module already exists.\n");

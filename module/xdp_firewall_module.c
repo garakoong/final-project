@@ -94,24 +94,24 @@ int fw_module(struct xdp_md *ctx)
 	__builtin_memset(&lookup_res, 0xff, sizeof(struct rule_vector));
 
     src_ip_lookup(iphdr, ipv6hdr, &lookup_res);
-	bpf_printk("saddr (%lx)\n", lookup_res.word[0]);
+	// bpf_printk("saddr (%lx)\n", lookup_res.word[0]);
 
 	dst_ip_lookup(iphdr, ipv6hdr, &lookup_res);
-	bpf_printk("daddr (%lx)\n", lookup_res.word[0]);
+	// bpf_printk("daddr (%lx)\n", lookup_res.word[0]);
 
 	if (ip_type == IPPROTO_TCP || ip_type == IPPROTO_UDP) {
 		src_port_lookup(tcphdr, udphdr, &lookup_res);
-		bpf_printk("sport (%lx)\n", lookup_res.word[0]);
+		// bpf_printk("sport (%lx)\n", lookup_res.word[0]);
 
 		dst_port_lookup(tcphdr, udphdr, &lookup_res);
-		bpf_printk("dport (%lx)\n", lookup_res.word[0]);
+		// bpf_printk("dport (%lx)\n", lookup_res.word[0]);
 	} else if (ip_type == IPPROTO_ICMP || ip_type == IPPROTO_ICMPV6) {
 		icmp_type_lookup(icmp_type, eth_type, &lookup_res);
-		bpf_printk("icmp (%lx)\n", lookup_res.word[0]);
+		// bpf_printk("icmp (%lx)\n", lookup_res.word[0]);
 	}
 
 	device_lookup(ctx, &lookup_res);
-	bpf_printk("dev (%lx)\n", lookup_res.word[0]);
+	// bpf_printk("dev (%lx)\n", lookup_res.word[0]);
 
 	int w = 0;
 	#pragma clang loop unroll(full)
@@ -146,14 +146,14 @@ verdict:
 				}
 			}
 
-			bpf_printk("action(%d): %d (%lx)\n", rule_num, rule_action, lookup_res.word[0]);
+			//bpf_printk("action(%d): %d (%lx)\n", rule_num, rule_action, lookup_res.word[0]);
 			return rule_action;
 		}
 		
 	}
 
 out:
-	bpf_printk("action: %d\n", action);
+	//bpf_printk("action: %d\n", action);
     return action;
 }
 
