@@ -375,11 +375,11 @@ int module_loader(struct config *cfg, int progarr_fd)
 		module_exists = 1;
 	}
 	
-	if (cfg->cmd == DELETE_MODULE) {
+	if (cfg->cmd == DELETE_MODULE || cfg->cmd == FLUSH_FW) {
 		if (!module_exists) {
 			fprintf(stderr, "ERR: Module '%s' not exists.\n", cfg->module_name);
 			return EXIT_FAIL_OPTION;
-		} else if (strcmp(cfg->module_name, "MAIN") == 0) {
+		} else if (cfg->cmd == DELETE_MODULE && strcmp(cfg->module_name, "MAIN") == 0) {
 			fprintf(stderr, "ERR: Module 'MAIN' can't be deleted.\n");
 			return EXIT_FAIL_OPTION;
 		}
@@ -407,9 +407,11 @@ int module_loader(struct config *cfg, int progarr_fd)
 		return EXIT_OK;
 	}
 
-	if (module_exists && !cfg->reuse_maps) {
-		if (strcmp(cfg->module_name, "MAIN") == 0)
-			return 0;
+	if (module_exists && !cfg->reuse_maps && cfg->cmd != FLUSH_MODULE) {
+		if (strcmp(cfg->module_name, "MAIN") == 0) {
+			cfg->reuse_maps = 1;
+			return EXIT_OK;
+		}
 		else {
 			fprintf(stderr, "ERR: Module already exists.\n");
 			return EXIT_FAIL_OPTION;

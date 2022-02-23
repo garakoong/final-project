@@ -51,17 +51,14 @@ static const struct option_wrapper long_options[] = {
 	{{"insert-module",	required_argument,	NULL, 'I' },
 	 "Insert module <module name> to module number <module num> of firewall.", "<module name>"},
 
-	{{"insert-rule",	required_argument,	NULL, 'i' },
-	 "Insert rule as rule number <rule num> of module <module name>. (use --rule-num to define <rule num>)", "<module name>"},
-
-	{{"activate",    required_argument,	NULL,  7  },
-	 "Activate module <module name>.", "<module name>"},
-
-	{{"deactivate",    required_argument,	NULL,  8  },
-	 "Deactivate module <module name>.", "<module name>"},
+	{{"policy",	required_argument,	NULL, 'P' },
+	 "Set module <module name> policy. (use --j to define action)", "<module name>"},
 
 	{{"interface",	required_argument,	NULL, 'i' },
 	 "Operate on device <ifname>", "<ifname>"},
+
+	{{"flush",	required_argument,	NULL, 'F' },
+	 "Flush module <module name>. (if '-' is given, flush firewall)", "<module name>"},
 
 	{{"unload",      no_argument,		NULL, 'U' },
 	 "Unload XDP program instead of loading"},
@@ -86,6 +83,15 @@ static const struct option_wrapper long_options[] = {
 
 	{{"jmp-index",    required_argument,	NULL,  6  },
 	 "Jump index.", "<jump index>"},
+
+	{{"activate",    required_argument,	NULL,  7  },
+	 "Activate module <module name>.", "<module name>"},
+
+	{{"deactivate",    required_argument,	NULL,  8  },
+	 "Deactivate module <module name>.", "<module name>"},
+
+	{{"new-name",    required_argument,	NULL,  9  },
+	 "Module new name.", "<new name>"},
 
 	{{0, 0, NULL,  0 }, NULL, false}
 };
@@ -158,8 +164,6 @@ int main(int argc, char **argv)
 
 	switch(cfg.cmd) {
 		case LOAD_FW:
-			strncpy(cfg.module_name, "MAIN", MAX_MODULE_NAME);
-			cfg.rule_action = XDP_PASS;
 			err = root_loader(&cfg);
 			if (err) {
 				fprintf(stderr, "ERR: loading firewall.\n");
@@ -168,6 +172,8 @@ int main(int argc, char **argv)
 			memset(&cfg.progsec, 0, sizeof(cfg.progsec));
 			cfg.rule_key.ifindex = 0;
 			cfg.cmd = ADD_MODULE;
+			strncpy(cfg.module_name, "MAIN", MAX_MODULE_NAME);
+			cfg.rule_action = XDP_PASS;
 			err = add_module(&cfg, 1);
 			if (err) {
 				fprintf(stderr, "ERR: adding Module 'MAIN'.\n");
@@ -224,6 +230,39 @@ int main(int argc, char **argv)
 			err = insert_module(&cfg);
 			if (err) {
 				fprintf(stderr, "ERR: inserting firewall module.\n");
+				return err;
+			}
+			break;
+		case SET_POLICY:
+			if (cfg.rule_action == XDP_ABORTED) {
+				printf("WARN: Module's policy is not set. Default is ACCEPT\n");
+				cfg.rule_action = XDP_PASS;
+			} else if (cfg.rule_action == XDP_REDIRECT && cfg.jmp_index < 0) {
+				fprintf(stderr, "ERR: Jump index is not set. (--jmp-index option is required)\n");
+				return EXIT_FAIL_OPTION;
+			}
+
+			err = set_policy(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: setting module %s policy.\n", cfg.module_name);
+				return err;
+			}
+			break;
+		case FLUSH_MODULE:
+			err = flush_module(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: flushing module %s.\n", cfg.module_name);
+				return err;
+			}
+			break;
+		case RENAME_MODULE:
+			if (strlen(cfg.module_new_name) <= 0) {
+				fprintf(stderr, "ERR: Module new name is not set. (--new-name is required)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			err = rename_module(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: renaming module %s.", cfg.module_name);
 				return err;
 			}
 			break;

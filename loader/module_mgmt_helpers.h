@@ -814,49 +814,52 @@ int add_module(struct config *cfg, int isMain)
 		return err;
 	}
 
-	// modules_info
-	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
-	if (len < 0) {
-		fprintf(stderr, "ERR: creating modules_info map path.\n");
-		return EXIT_FAIL_OPTION;
+	if (!(isMain && cfg->reuse_maps)) {
+
+		// modules_info
+		len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+		if (len < 0) {
+			fprintf(stderr, "ERR: creating modules_info map path.\n");
+			return EXIT_FAIL_OPTION;
+		}
+
+		map_fd = bpf_obj_get(map_path);
+		if (map_fd < 0) {
+			fprintf(stderr, "ERR: Opening modules_info map.\n");
+			return EXIT_FAIL_BPF;
+		}
+
+		if (bpf_map_update_elem(map_fd, &cfg->module_index, &info, 0)) {
+			fprintf(stderr, "ERR: Error updating module info.\n");
+			return EXIT_FAIL_BPF;
+		}
+
+		// modules_index
+		len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+		if (len < 0) {
+			fprintf(stderr, "ERR: creating modules_index map path.\n");
+			return EXIT_FAIL_OPTION;
+		}
+
+		map_fd = bpf_obj_get(map_path);
+		if (map_fd < 0) {
+			fprintf(stderr, "ERR: Opening modules_index map.\n");
+			return EXIT_FAIL_BPF;
+		}
+
+		if (bpf_map_update_elem(map_fd, &cfg->module_name, &cfg->module_index, 0)) {
+			fprintf(stderr, "ERR: Error updating module index.\n");
+			return EXIT_FAIL_BPF;
+		}
+
+		if (isMain)
+			err = set_classifier_vectors(cfg, 0);
+		else
+			err = set_classifier_vectors(cfg, 1);
+
+		if (err)
+			return err;
 	}
-
-	map_fd = bpf_obj_get(map_path);
-	if (map_fd < 0) {
-		fprintf(stderr, "ERR: Opening modules_info map.\n");
-		return EXIT_FAIL_BPF;
-	}
-
-	if (bpf_map_update_elem(map_fd, &cfg->module_index, &info, 0)) {
-		fprintf(stderr, "ERR: Error updating module info.\n");
-		return EXIT_FAIL_BPF;
-	}
-
-	// modules_index
-	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
-	if (len < 0) {
-		fprintf(stderr, "ERR: creating modules_index map path.\n");
-		return EXIT_FAIL_OPTION;
-	}
-
-	map_fd = bpf_obj_get(map_path);
-	if (map_fd < 0) {
-		fprintf(stderr, "ERR: Opening modules_index map.\n");
-		return EXIT_FAIL_BPF;
-	}
-
-	if (bpf_map_update_elem(map_fd, &cfg->module_name, &cfg->module_index, 0)) {
-		fprintf(stderr, "ERR: Error updating module index.\n");
-		return EXIT_FAIL_BPF;
-	}
-
-	if (isMain)
-		err = set_classifier_vectors(cfg, 0);
-	else
-		err = set_classifier_vectors(cfg, 1);
-
-	if (err)
-		return err;
 
 	if (!isMain) {
 		module_index += 1;
@@ -3560,7 +3563,11 @@ int change_module_status(struct config *cfg)
 	int index_map_fd;
 	char map_path[PATH_MAX];
 	struct module_info minfo;
-	
+
+	if (strcmp("MAIN", cfg->module_name) == 0) {
+		fprintf(stderr, "ERR: Module 'MAIN' status can't be changed.\n");
+		return EXIT_FAIL_OPTION;
+	}
 
 	// get module index
 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
@@ -3631,6 +3638,216 @@ int change_module_status(struct config *cfg)
 		return EXIT_FAIL_BPF;
 	}
 	
+
+	return EXIT_OK;
+
+}
+
+int rename_module(struct config *cfg)
+{
+
+	int err, len;
+	int module_index = -1;
+	int module_map_fd;
+	int index_map_fd;
+	char map_path[PATH_MAX];
+	char new_dir[PATH_MAX];
+	char old_dir[PATH_MAX];
+	struct module_info minfo;
+	
+
+	// get module index
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	index_map_fd = bpf_obj_get(map_path);
+	if (index_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (!bpf_map_lookup_elem(index_map_fd, &cfg->module_new_name, &module_index)) {
+		fprintf(stderr, "ERR: Module %s already existed.", cfg->module_new_name);
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(index_map_fd, &cfg->module_name, &module_index)) {
+		fprintf(stderr, "ERR: Reading module index.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (module_index < 0) {
+		fprintf(stderr, "ERR: Module '%s' not found.\n", cfg->module_name);
+		return EXIT_FAIL_BPF;
+	}
+
+	// modules_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo)) {
+		fprintf(stderr, "ERR: Reading modules info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (strcmp(minfo.module_name, cfg->module_name)) {
+		fprintf(stderr, "ERR: Module name mismatch.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	if (bpf_map_update_elem(index_map_fd, &cfg->module_new_name, &module_index, 0)) {
+		fprintf(stderr, "ERR: Updating module_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	strncpy(minfo.module_name, cfg->module_new_name, MAX_MODULE_NAME);
+		
+	if (bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
+		fprintf(stderr, "ERR: Updating module_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_delete_elem(index_map_fd, &cfg->module_name)) {
+		fprintf(stderr, "ERR: Deleting old module index.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(old_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: Creating old directory name.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	len = snprintf(new_dir, PATH_MAX, "%s/%s", pin_basedir, cfg->module_new_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: Creating old directory name.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	
+	err = rename(old_dir, new_dir);
+	if (err) {
+		fprintf(stderr, "ERR: Rename module directory.\n");
+		return err;
+	}
+
+	return EXIT_OK;
+
+}
+
+int flush_module(struct config *cfg)
+{
+	int err, len;
+	int module_index = -1;
+	int index;
+	int module_map_fd;
+	int rule_map_fd;
+	int index_map_fd;
+	char map_path[PATH_MAX];
+	struct module_info minfo;
+	struct rule_info policy;
+	cfg->reuse_maps = 0;
+	
+
+	// get module index
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	index_map_fd = bpf_obj_get(map_path);
+	if (index_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(index_map_fd, &cfg->module_name, &module_index)) {
+		fprintf(stderr, "ERR: Reading module index.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (module_index < 0) {
+		fprintf(stderr, "ERR: Module '%s' not found.\n", cfg->module_name);
+		return EXIT_FAIL_BPF;
+	}
+
+	// modules_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo)) {
+		fprintf(stderr, "ERR: Reading modules info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	cfg->module_index = module_index;
+
+	if (strcmp(minfo.module_name, cfg->module_name)) {
+		fprintf(stderr, "ERR: Module name mismatch.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	rule_map_fd = bpf_obj_get(map_path);
+	if (rule_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	index = POLICY_RULE;
+	if (bpf_map_lookup_elem(rule_map_fd, &index, &policy)) {
+		fprintf(stderr, "ERR: Reading policy.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	err = module_loader(cfg, -1);
+	if (err)
+		return err;
+
+	minfo.rule_count = 0;
+	if (bpf_map_update_elem(module_map_fd, &module_index, &minfo, 0)) {
+		fprintf(stderr, "ERR: Updating modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	struct config policy_cfg = {
+		.rule_key	= policy.rule_key,
+		.rule_action = policy.action,
+		.jmp_index = policy.jmp_index,
+	};
+
+	strncpy(policy_cfg.module_name, cfg->module_name, MAX_MODULE_NAME);
+
+	err = add_rule(&policy_cfg, 1);
+	if (err) {
+		fprintf(stderr, "ERR: Initialize %s policy.\n", policy_cfg.module_name);
+		return err;
+	}
+
 
 	return EXIT_OK;
 

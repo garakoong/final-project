@@ -3327,4 +3327,65 @@ int list_rules(struct config *cfg) {
 	return EXIT_OK;
 }
 
+int set_policy(struct config *cfg)
+{
+	int len;
+	int rule_map_fd;
+	int module_map_fd;
+	int module_index;
+	char map_path[PATH_MAX];
+	struct rule_info rinfo;
+	cfg->rule_num = POLICY_RULE;
+
+	// get module index
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(module_map_fd, &cfg->module_name, &module_index)) {
+		fprintf(stderr, "ERR: Reading module index.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (module_index < 0) {
+		fprintf(stderr, "ERR: Module '%s' not found.\n", cfg->module_name);
+		return EXIT_FAIL_BPF;
+	}
+
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	rule_map_fd = bpf_obj_get(map_path);
+	if (rule_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(rule_map_fd, &cfg->rule_num, &rinfo)) {
+		fprintf(stderr, "ERR: Reading policy.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	rinfo.action = cfg->rule_action;
+	rinfo.jmp_index = cfg->jmp_index;
+
+	if (bpf_map_update_elem(rule_map_fd, &cfg->rule_num, &rinfo, 0)) {
+		fprintf(stderr, "ERR: Updating policy.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	return EXIT_OK;
+}
+
 #endif

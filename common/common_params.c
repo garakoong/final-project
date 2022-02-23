@@ -105,7 +105,7 @@ void parse_cmdline_args(int argc, char **argv,
 	}
 
 	/* Parse commands line args */
-	while ((opt = getopt_long(argc, argv, "hLN:A:X:D:I:i:E:e:M:m:S:F:C:O:o:Uqs:d:p:j:",
+	while ((opt = getopt_long(argc, argv, "hLN:A:X:D:I:i:R:E:P:M:m:S:F:C:O:o:Uqs:d:p:j:",
 				  long_options, &longindex)) != -1) {
 		switch (opt) {
 		case 'L':
@@ -123,6 +123,10 @@ void parse_cmdline_args(int argc, char **argv,
 			cfg->cmd = ADD_MODULE;
 			if (strlen(optarg) >= MAX_MODULE_NAME) {
 				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			if (strcmp("-", optarg) == 0) {
+				fprintf(stderr, "ERR: '-' can't be used as module name.\n");
 				goto error;
 			}
 			dest  = (char *)&cfg->module_name;
@@ -177,6 +181,10 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: module name too long\n");
 				goto error;
 			}
+			if (strcmp("-", optarg) == 0) {
+				fprintf(stderr, "ERR: '-' can't be used as module name.\n");
+				goto error;
+			}
 			dest  = (char *)&cfg->module_name;
 			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
@@ -187,19 +195,31 @@ void parse_cmdline_args(int argc, char **argv,
 			}
 			cfg->cmd = REPLACE_MODULE;
 			break;
-		case 'M':
+		case 'E':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
-			cfg->cmd = MOVE_MODULE;
+			cfg->cmd = RENAME_MODULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
-		case 'm':
+		case 'P':
 			if (cfg->cmd != PRESERVED) {
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
-			cfg->cmd = DELETE_RULE;
+			cfg->cmd = SET_POLICY;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 'S':
 			if (cfg->cmd != PRESERVED) {
@@ -224,16 +244,18 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
-			cfg->cmd = FLUSH_FW;
-			/* check module name, if not '-' cfg->cmd = FLUSH_MODULE */
-			break;
-		case 'C':
-			if (cfg->cmd != PRESERVED) {
-				fprintf(stderr, "ERR: Too many command flags.");
+			cfg->cmd = FLUSH_MODULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
 				goto error;
 			}
-			cfg->cmd = FLUSH_FW_STATS;
-			/* check module name, if not '-' cfg->cmd = FLUSH_MODULE_STATS */
+			if (strcmp(optarg, "-") == 0) {
+				cfg->cmd = FLUSH_FW;
+			} else {
+				dest  = (char *)&cfg->module_name;
+				strncpy(dest, optarg, MAX_MODULE_NAME);
+			}
+			/* check module name, if not '-' cfg->cmd = FLUSH_MODULE */
 			break;
 		case 7: /* --activate */
 			if (cfg->cmd != PRESERVED) {
@@ -359,6 +381,18 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: Invalid jump index.\n");
 				goto error;
 			}
+			break;
+		case 9: /* --new-name */
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			if (strcmp("-", optarg) == 0) {
+				fprintf(stderr, "ERR: '-' can't be used as module name.\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_new_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 's':
 			prefixlen = -1;

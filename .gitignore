@@ -43,6 +43,7 @@
 *.su
 *.idb
 *.pdb
+*.pcap
 
 # Kernel Module Compile Results
 *.mod*
@@ -56,6 +57,7 @@ dkms.conf
 # Userspace programs
 xdp_loader
 xdp_stats
+xdp-mfw
 xdp_pass_user
 xdp_load_and_stats
 xdp_prog_user
@@ -66,3 +68,7 @@ trace_load_and_stats
 trace_load_and_stats
 trace_read
 xdp_sample_pkts_user
+
+#out dir
+out/
+*.tar.gz
