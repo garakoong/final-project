@@ -778,6 +778,27 @@ int add_module(struct config *cfg, int isMain)
 
 	cfg->reuse_maps = 0;
 
+	if (isMain) {
+		strncpy(info.module_name, "MAIN", MAX_MODULE_NAME);
+		
+		cfg->rule_key.AF			= 0;
+		cfg->rule_key.src_ipv4	= 0x00000000;
+		cfg->rule_key.dst_ipv4	= 0x00000000;
+		cfg->rule_key.proto		= 255;
+		cfg->rule_key.sport		= 0;
+		cfg->rule_key.dport		= 0;
+		cfg->rule_key.icmp_type	= 255;
+		cfg->rule_key.ifindex	= 0;
+
+		memset(&cfg->rule_key.src_ipv6, 0, sizeof(struct in6_addr));
+		memset(&cfg->rule_key.dst_ipv6, 0, sizeof(struct in6_addr));
+		memset(&cfg->rule_key.src_ipv4_lpm, 0, ipv4_lpm_key_size);
+		memset(&cfg->rule_key.dst_ipv4_lpm, 0, ipv4_lpm_key_size);
+		memset(&cfg->rule_key.src_ipv6_lpm, 0, ipv6_lpm_key_size);
+		memset(&cfg->rule_key.dst_ipv6_lpm, 0, ipv6_lpm_key_size);
+
+	}
+
 	strncpy(info.module_name, cfg->module_name, MAX_MODULE_NAME);
 
 	if (!isMain) {
@@ -3847,6 +3868,80 @@ int flush_module(struct config *cfg)
 		fprintf(stderr, "ERR: Initialize %s policy.\n", policy_cfg.module_name);
 		return err;
 	}
+
+
+	return EXIT_OK;
+
+}
+
+int flush_firewall(struct config *cfg)
+{
+	int err, len;
+	int module_index = -1;
+	int module_count;
+	int index;
+	int fw_map_fd;
+	int module_map_fd;
+	char map_path[PATH_MAX];
+	struct module_info minfo;
+	cfg->reuse_maps = 0;
+	
+
+	//get firewall_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/firewall_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating firewall_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	fw_map_fd = bpf_obj_get(map_path);
+	if (fw_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening firewall_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	index = 0;
+	if (bpf_map_lookup_elem(fw_map_fd, &index, &module_count)) {
+		fprintf(stderr, "ERR: Reading firewall_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	// modules_info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	for (module_index=0; module_index < module_count; module_index++) {
+		if (bpf_map_lookup_elem(module_map_fd, &module_index, &minfo)) {
+			fprintf(stderr, "ERR: Reading modules info.\n");
+			return EXIT_FAIL_BPF;
+		}
+		strncpy(cfg->module_name, minfo.module_name, MAX_MODULE_NAME);
+		err = module_loader(cfg, -1);
+		if (err)
+			return err;
+	}
+
+	strncpy(cfg->module_name, "MAIN", MAX_MODULE_NAME);
+	err = module_loader(cfg, -1);
+	if (err)
+		return err;
+
+	err = fw_loader(0);
+	if (err)
+		return err;
+
+	cfg->cmd = ADD_MODULE;
+	err = add_module(cfg, 1);
+	if (err)
+		return err;
 
 
 	return EXIT_OK;

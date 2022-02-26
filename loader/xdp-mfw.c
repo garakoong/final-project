@@ -255,6 +255,13 @@ int main(int argc, char **argv)
 				return err;
 			}
 			break;
+		case FLUSH_FW:
+			err = flush_firewall(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: flushing firewall.\n");
+				return err;
+			}
+			break;
 		case RENAME_MODULE:
 			if (strlen(cfg.module_new_name) <= 0) {
 				fprintf(stderr, "ERR: Module new name is not set. (--new-name is required)\n");
