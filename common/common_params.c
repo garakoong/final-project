@@ -17,7 +17,7 @@
 #include "common_params.h"
 #include "firewall_common.h"
 
-int verbose = 1;
+int verbose = 0;
 
 #define BUFSIZE 30
 
@@ -193,7 +193,13 @@ void parse_cmdline_args(int argc, char **argv,
 				fprintf(stderr, "ERR: Too many command flags.");
 				goto error;
 			}
-			cfg->cmd = REPLACE_MODULE;
+			cfg->cmd = REWRITE_MODULE;
+			if (strlen(optarg) >= MAX_MODULE_NAME) {
+				fprintf(stderr, "ERR: module name too long\n");
+				goto error;
+			}
+			dest  = (char *)&cfg->module_name;
+			strncpy(dest, optarg, MAX_MODULE_NAME);
 			break;
 		case 'E':
 			if (cfg->cmd != PRESERVED) {
@@ -307,7 +313,7 @@ void parse_cmdline_args(int argc, char **argv,
 			else if (strcmp(optarg, "JUMP") == 0)
 				cfg->rule_action = XDP_REDIRECT;
 			else {
-				fprintf(stderr, "ERR: Action not supported. (Only 'ACCEPT' and 'REJECT' is available.\n");
+				fprintf(stderr, "ERR: Action not supported. (Only 'ACCEPT', 'REJECT', and 'JUMP' is available.\n");
 				goto error;
 			}
 			break;
@@ -544,6 +550,9 @@ void parse_cmdline_args(int argc, char **argv,
 		switch(cfg->cmd) {
 			case INSERT_MODULE:
 				cfg->cmd = INSERT_RULE;
+				break;
+			case REWRITE_MODULE:
+				cfg->cmd = REWRITE_RULE;
 				break;
 			default:
 				break;

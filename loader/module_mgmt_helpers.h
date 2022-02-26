@@ -920,7 +920,9 @@ int add_module(struct config *cfg, int isMain)
 		return err;
 	}
 
-	printf("Module '%s' successfully added to firewall at index %d.\n", cfg->module_name, cfg->module_index);
+	if (verbose)
+		printf("Module '%s' successfully added to firewall at index %d.\n", cfg->module_name, cfg->module_index);
+
 	return EXIT_OK;
 }
 
@@ -1892,6 +1894,11 @@ int delete_module(struct config *cfg)
 	struct module_info minfo;
 	int nr_cpus = libbpf_num_possible_cpus();
 	struct stats_rec rec[nr_cpus];
+
+	if (strcmp(cfg->module_name, "MAIN") == 0) {
+		fprintf(stderr, "ERR: Module 'MAIN' can't be deleted.\n");
+		return EXIT_FAIL_OPTION;
+	}
 
 	// get module index
 	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
@@ -3946,6 +3953,85 @@ int flush_firewall(struct config *cfg)
 
 	return EXIT_OK;
 
+}
+
+int rewrite_module(struct config *cfg)
+{
+	int err, len;
+	int module_map_fd;
+	int index_map_fd;
+	int module_index;
+	char map_path[PATH_MAX];
+	struct module_info minfo;
+	
+	if (strcmp(cfg->module_name, "MAIN") == 0) {
+		fprintf(stderr, "ERR: Module 'MAIN' can't be rewrited.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	// get module index
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_index", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_index map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	index_map_fd = bpf_obj_get(map_path);
+	if (index_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_index map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(index_map_fd, &cfg->module_name, &module_index)) {
+		fprintf(stderr, "ERR: Reading module index.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (module_index < 0) {
+		fprintf(stderr, "ERR: Module '%s' not found.\n", cfg->module_name);
+		return EXIT_FAIL_BPF;
+	}
+
+	cfg->module_index = module_index;
+
+	// get module info
+	len = snprintf(map_path, PATH_MAX, "%s/classifier/modules_info", pin_basedir);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating modules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	module_map_fd = bpf_obj_get(map_path);
+	if (module_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening modules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (bpf_map_lookup_elem(module_map_fd, &cfg->module_index, &minfo)) {
+		fprintf(stderr, "ERR: Reading module info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	struct config old_cfg = {
+		.rule_key = minfo.key,
+		.module_index = module_index,
+	};
+
+	err = set_classifier_vectors(&old_cfg, 0);
+	if (err)
+		return err;
+
+	err = set_classifier_vectors(cfg, 1);
+	if (err)
+		return err;
+
+	minfo.key = cfg->rule_key;
+	if (bpf_map_update_elem(module_map_fd, &cfg->module_index, &minfo, 0)) {
+		fprintf(stderr, "ERR: Updating module info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	return EXIT_OK;
 }
 
 #endif

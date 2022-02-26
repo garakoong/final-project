@@ -48,8 +48,11 @@ static const struct option_wrapper long_options[] = {
 	{{"delete-rule",	required_argument,	NULL, 'D' },
 	 "Delete rule number <rule num> from module <module name>. (use --rule-num to define <rule num>)", "<module name>"},
 
-	{{"insert-module",	required_argument,	NULL, 'I' },
-	 "Insert module <module name> to module number <module num> of firewall.", "<module name>"},
+	{{"insert",	required_argument,	NULL, 'I' },
+	 "Insert module / rule at index <index>. (--index for module / --rule-num for rule)", "<module name>"},
+
+	{{"rewrite",	required_argument,	NULL, 'R' },
+	 "Rewrite module / rule at index <index>. (--index for module / --rule-num for rule)", "<module name>"},
 
 	{{"policy",	required_argument,	NULL, 'P' },
 	 "Set module <module name> policy. (use --j to define action)", "<module name>"},
@@ -233,6 +236,13 @@ int main(int argc, char **argv)
 				return err;
 			}
 			break;
+		case REWRITE_MODULE:
+			err = rewrite_module(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: rewriting module %s.\n", cfg.module_name);
+				return err;
+			}
+			break;
 		case SET_POLICY:
 			if (cfg.rule_action == XDP_ABORTED) {
 				printf("WARN: Module's policy is not set. Default is ACCEPT\n");
@@ -314,6 +324,24 @@ int main(int argc, char **argv)
 			err = insert_rule(&cfg);
 			if (err) {
 				fprintf(stderr, "ERR: inserting rule to module %s at index %d.\n", cfg.module_name, cfg.rule_num);
+				return err;
+			}
+			break;
+		case REWRITE_RULE:
+			if (cfg.rule_num < 0) {
+				fprintf(stderr, "ERR: Rule number is not set. (--rule-num option is required.)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			if (cfg.rule_action == XDP_ABORTED) {
+				printf("WARN: Rule action is not set. Default is ACCEPT\n");
+				cfg.rule_action = XDP_PASS;
+			} else if (cfg.rule_action == XDP_REDIRECT && cfg.jmp_index < 0) {
+				fprintf(stderr, "ERR: Jump index is not set. (--jmp-index option is required)\n");
+				return EXIT_FAIL_OPTION;
+			}
+			err = rewrite_rule(&cfg);
+			if (err) {
+				fprintf(stderr, "ERR: rewriting rule.\n");
 				return err;
 			}
 			break;

@@ -860,7 +860,8 @@ int add_rule(struct config *cfg, int isPolicy)
 			fprintf(stderr, "ERR: Updating modules info.\n");
 			return EXIT_FAIL_BPF;
 		}
-		printf("Rule successfully added to module %s at index %d.\n", cfg->module_name, cfg->rule_num);
+		if (verbose)
+			printf("Rule successfully added to module %s at index %d.\n", cfg->module_name, cfg->rule_num);
 	}
 
 	return EXIT_OK;
@@ -3327,6 +3328,8 @@ int list_rules(struct config *cfg) {
 	return EXIT_OK;
 }
 
+
+
 int set_policy(struct config *cfg)
 {
 	int len;
@@ -3382,6 +3385,62 @@ int set_policy(struct config *cfg)
 
 	if (bpf_map_update_elem(rule_map_fd, &cfg->rule_num, &rinfo, 0)) {
 		fprintf(stderr, "ERR: Updating policy.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	return EXIT_OK;
+}
+
+int rewrite_rule(struct config *cfg)
+{
+	int err, len;
+	int rule_map_fd;
+	char map_path[PATH_MAX];
+	struct rule_info rinfo;
+
+	// get rule info
+	len = snprintf(map_path, PATH_MAX, "%s/%s/rules_info", pin_basedir, cfg->module_name);
+	if (len < 0) {
+		fprintf(stderr, "ERR: creating rules_info map path.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	rule_map_fd = bpf_obj_get(map_path);
+	if (rule_map_fd < 0) {
+		fprintf(stderr, "ERR: Opening rules_info map.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	if (cfg->rule_num > MAX_RULE || cfg->rule_num < 0) {
+		fprintf(stderr, "ERR: Invalid rule num.\n");
+		return EXIT_FAIL_OPTION;
+	}
+
+	if (bpf_map_lookup_elem(rule_map_fd, &cfg->rule_num, &rinfo)) {
+		fprintf(stderr, "ERR: Reading module info.\n");
+		return EXIT_FAIL_BPF;
+	}
+
+	struct config old_cfg = {
+		.rule_num = cfg->rule_num,
+		.rule_key = rinfo.rule_key,
+	};
+
+	strncpy(old_cfg.module_name, cfg->module_name, MAX_MODULE_NAME);
+
+	err = set_vectors(&old_cfg, 0);
+	if (err)
+		return err;
+
+	err = set_vectors(cfg, 1);
+	if (err)
+		return err;
+
+	rinfo.rule_key = cfg->rule_key;
+	rinfo.action = cfg->rule_action;
+
+	if (bpf_map_update_elem(rule_map_fd, &cfg->rule_num, &rinfo, 0)) {
+		fprintf(stderr, "ERR: Updating rule info.\n");
 		return EXIT_FAIL_BPF;
 	}
 
