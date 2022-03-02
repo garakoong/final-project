@@ -3946,6 +3946,7 @@ int flush_firewall(struct config *cfg)
 		return err;
 
 	cfg->cmd = ADD_MODULE;
+	cfg->rule_action = XDP_PASS;
 	err = add_module(cfg, 1);
 	if (err)
 		return err;
