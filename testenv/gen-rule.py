@@ -46,7 +46,7 @@ def gen_iptables_rule(nr_modules, nr_rules):
         m = f"MODULE{i+1}"
         
         print(f"sudo iptables -N {m} ")
-        print(f"sudo iptables -A {m} -j ACCEPT")
+        
         if i < nr_modules-1:
             print(f"sudo iptables -A INPUT -s 192.168.{100+(i//250)}.{(i%250)+1} -j {m}")
         else:
